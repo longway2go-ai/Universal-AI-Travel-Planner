@@ -1,6 +1,6 @@
 # streamlit_app.py
 """
-Harry Potter Travel Planner - Enhanced Streamlit Web App with Auto-Geocoding & Nearby Places Discovery
+Universal Travel Planner - Enhanced Streamlit Web App with Auto-Geocoding & Nearby Places Discovery
 Deploy with: streamlit run streamlit_app.py
 """
 import streamlit as st
@@ -16,8 +16,8 @@ from typing import Dict, List, Tuple, Optional
 
 # Set page config
 st.set_page_config(
-    page_title="AI Travel Planner (Harry Potter filming location default)",
-    page_icon="⚡",
+    page_title="AI Travel Planner - Discover Amazing Destinations",
+    page_icon="🌍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -27,27 +27,48 @@ st.markdown("""
 <style>
     .main-header {
         font-size: 3rem;
-        color: #722F37;
+        color: #2E86AB;
         text-align: center;
         margin-bottom: 2rem;
+        background: linear-gradient(90deg, #2E86AB, #A23B72, #F18F01);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: bold;
     }
     .stButton > button {
-        background-color: #722F37;
+        background: linear-gradient(45deg, #2E86AB, #A23B72);
         color: white;
         border-radius: 10px;
         border: none;
         padding: 0.5rem 1rem;
         font-weight: bold;
+        transition: all 0.3s ease;
     }
     .stButton > button:hover {
-        background-color: #8B4513;
+        background: linear-gradient(45deg, #A23B72, #F18F01);
+        transform: translateY(-2px);
+    }
+    .example-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 0.5rem 0;
+        color: white;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 0.5rem 0;
+        color: white;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown('<h1 class="main-header">⚡ AI Travel Planner (Harry Potter filming location default) ⚡</h1>', unsafe_allow_html=True)
-st.markdown("Plan your magical journey to filming locations worldwide! Now with **automatic location geocoding** and **nearby places discovery** - just enter location names!")
+st.markdown('<h1 class="main-header">🌍 Universal AI Travel Planner 🗺️</h1>', unsafe_allow_html=True)
+st.markdown("**Discover amazing destinations worldwide!** Plan your perfect trip with AI-powered recommendations, automatic location discovery, and interactive maps.")
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -58,10 +79,7 @@ def clean_dataframe_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def safe_get_column(df, column_name, default_name=None):
     """Safely get column from DataFrame with case-insensitive matching"""
-    # Create mapping of lowercase column names to actual names
     col_map = {col.lower().strip(): col for col in df.columns}
-    
-    # Try to find the column (case-insensitive)
     target_col = column_name.lower().strip()
     if target_col in col_map:
         return col_map[target_col]
@@ -73,10 +91,7 @@ def safe_get_column(df, column_name, default_name=None):
 # ==================== GEOCODING FUNCTIONS ====================
 
 def geocode_location_with_fallback(location: str) -> Tuple[Optional[float], Optional[float], str]:
-    """
-    Try multiple free geocoding APIs as fallback
-    Returns: (lat, lon, source_api)
-    """
+    """Try multiple free geocoding APIs as fallback"""
     if not location or location.strip() == "":
         return None, None, "invalid_input"
     
@@ -100,12 +115,8 @@ def geocode_location_with_fallback(location: str) -> Tuple[Optional[float], Opti
     # Method 2: Nominatim OpenStreetMap (free, but rate limited)
     try:
         url = "https://nominatim.openstreetmap.org/search"
-        params = {
-            "q": location,
-            "format": "json",
-            "limit": 1
-        }
-        headers = {"User-Agent": "Harry Potter Travel Planner"}
+        params = {"q": location, "format": "json", "limit": 1}
+        headers = {"User-Agent": "Universal Travel Planner"}
         response = requests.get(url, params=params, headers=headers, timeout=10)
         data = response.json()
         
@@ -122,7 +133,6 @@ def geocode_location_with_fallback(location: str) -> Tuple[Optional[float], Opti
 
 def find_nearby_places_with_ai(model, location_name: str, lat: float, lon: float, radius_km: int = 50):
     """Use AI to find interesting places near a given location"""
-    
     if model is None:
         return []
     
@@ -130,10 +140,10 @@ def find_nearby_places_with_ai(model, location_name: str, lat: float, lon: float
     Find interesting places to visit near {location_name} (coordinates: {lat:.4f}, {lon:.4f}).
     
     REQUIREMENTS:
-    - Find 10 diverse attractions, landmarks, or points of interest
+    - Find 15 diverse attractions, landmarks, or points of interest
     - Include places within approximately {radius_km}km radius
     - For each place provide: exact name, approximate coordinates (lat, lon), type of attraction
-    - Include mix of: historical sites, natural attractions, cultural sites, entertainment venues
+    - Include mix of: historical sites, natural attractions, cultural sites, entertainment venues, restaurants, shopping areas
     - Avoid duplicating the main location: {location_name}
     
     FORMAT RESPONSE AS:
@@ -142,8 +152,8 @@ def find_nearby_places_with_ai(model, location_name: str, lat: float, lon: float
     ...
     
     Example:
-    1. Edinburgh Castle | 55.9486 | -3.1999 | Historical | 2km
-    2. Royal Mile | 55.9500 | -3.1900 | Cultural | 1km
+    1. Central Park | 40.7829 | -73.9654 | Natural Park | 2km
+    2. Metropolitan Museum | 40.7794 | -73.9632 | Cultural Museum | 1km
     
     Provide realistic coordinates and distances.
     """
@@ -166,9 +176,7 @@ def parse_ai_nearby_places(ai_response: str, main_location: str):
             if '|' in line and any(char.isdigit() for char in line):
                 parts = [part.strip() for part in line.split('|')]
                 if len(parts) >= 4:
-                    # Extract name (remove numbering)
                     name = parts[0]
-                    # Remove leading numbers and dots
                     name = re.sub(r'^\d+\.\s*', '', name)
                     
                     try:
@@ -189,23 +197,23 @@ def parse_ai_nearby_places(ai_response: str, main_location: str):
     except Exception as e:
         st.warning(f"Error parsing AI response: {e}")
     
-    return places[:10]  # Limit to 10 places
+    return places[:15]
 
 def find_nearby_places_with_api(lat: float, lon: float, radius_km: int = 50):
     """Find nearby places using free web APIs"""
     places = []
     
     try:
-        # Use Overpass API (OpenStreetMap) to find nearby attractions
         overpass_url = "http://overpass-api.de/api/interpreter"
         
-        # Query for tourist attractions, museums, monuments, etc.
         overpass_query = f"""
         [out:json][timeout:25];
         (
-          node["tourism"~"attraction|museum|monument|castle|gallery"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
-          node["historic"~"castle|monument|museum|ruins"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
-          node["amenity"~"theatre|cinema|library"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
+          node["tourism"~"attraction|museum|monument|castle|gallery|zoo|aquarium|theme_park"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
+          node["historic"~"castle|monument|museum|ruins|archaeological_site"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
+          node["amenity"~"theatre|cinema|library|restaurant|cafe|bar"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
+          node["leisure"~"park|garden|sports_centre|marina|beach_resort"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
+          node["natural"~"beach|peak|hot_spring|waterfall"]({lat-0.5},{lon-0.5},{lat+0.5},{lon+0.5});
         );
         out center meta;
         """
@@ -214,15 +222,14 @@ def find_nearby_places_with_api(lat: float, lon: float, radius_km: int = 50):
         data = response.json()
         
         if 'elements' in data:
-            for element in data['elements'][:15]:  # Limit results
+            for element in data['elements'][:20]:
                 if 'tags' in element and 'name' in element['tags']:
                     place_lat = element.get('lat', 0)
                     place_lon = element.get('lon', 0)
                     name = element['tags']['name']
                     
-                    # Determine type
                     tags = element['tags']
-                    place_type = tags.get('tourism', tags.get('historic', tags.get('amenity', 'attraction')))
+                    place_type = tags.get('tourism', tags.get('historic', tags.get('amenity', tags.get('leisure', tags.get('natural', 'attraction')))))
                     
                     if place_lat and place_lon and name:
                         places.append({
@@ -236,7 +243,72 @@ def find_nearby_places_with_api(lat: float, lon: float, radius_km: int = 50):
     except Exception as e:
         st.warning(f"Could not fetch nearby places from web API: {e}")
     
-    return places[:10]
+    return places[:15]
+
+# ==================== TRAVEL EXAMPLES ====================
+
+TRAVEL_EXAMPLES = {
+    "🏛️ Historical Europe": {
+        "description": "Explore Europe's rich history and culture",
+        "locations": {
+            "Rome, Italy": (41.9028, 12.4964),
+            "Athens, Greece": (37.9755, 23.7348),
+            "Paris, France": (48.8566, 2.3522),
+            "Prague, Czech Republic": (50.0755, 14.4378),
+            "Vienna, Austria": (48.2082, 16.3738)
+        }
+    },
+    "🏝️ Tropical Paradise": {
+        "description": "Relax in stunning tropical destinations",
+        "locations": {
+            "Bali, Indonesia": (-8.3405, 115.0920),
+            "Maldives": (3.2028, 73.2207),
+            "Seychelles": (-4.6796, 55.4920),
+            "Mauritius": (-20.3484, 57.5522),
+            "Santorini, Greece": (36.3932, 25.4615)
+        }
+    },
+    "🏔️ Adventure Mountains": {
+        "description": "Conquer peaks and enjoy breathtaking views",
+        "locations": {
+            "Swiss Alps, Switzerland": (46.5197, 7.9738),
+            "Himalayas, Nepal": (28.0000, 84.0000),
+            "Rocky Mountains, USA": (40.3428, -105.6836),
+            "Andes, Peru": (-13.1631, -72.5450),
+            "Patagonia, Argentina": (-50.5025, -73.0061)
+        }
+    },
+    "🏙️ Modern Metropolis": {
+        "description": "Experience vibrant city life and culture",
+        "locations": {
+            "Tokyo, Japan": (35.6762, 139.6503),
+            "New York, USA": (40.7128, -74.0060),
+            "Dubai, UAE": (25.2048, 55.2708),
+            "Singapore": (1.3521, 103.8198),
+            "London, UK": (51.5074, -0.1278)
+        }
+    },
+    "🎨 Art & Culture": {
+        "description": "Immerse yourself in world-class art and culture",
+        "locations": {
+            "Florence, Italy": (43.7696, 11.2558),
+            "Barcelona, Spain": (41.3851, 2.1734),
+            "St. Petersburg, Russia": (59.9311, 30.3609),
+            "Cairo, Egypt": (30.0444, 31.2357),
+            "Kyoto, Japan": (35.0116, 135.7681)
+        }
+    },
+    "🏖️ Beach Getaway": {
+        "description": "Unwind on the world's most beautiful beaches",
+        "locations": {
+            "Cancun, Mexico": (21.1619, -86.8515),
+            "Phuket, Thailand": (7.8804, 98.3923),
+            "Gold Coast, Australia": (-28.0167, 153.4000),
+            "Ibiza, Spain": (38.9067, 1.4206),
+            "Hawaii, USA": (21.3099, -157.8581)
+        }
+    }
+}
 
 # ==================== SIDEBAR CONFIGURATION ====================
 
@@ -244,43 +316,36 @@ st.sidebar.header("🧳 Trip Configuration")
 
 # API Keys setup
 with st.sidebar.expander("🔐 API Keys Setup"):
-    st.info("Enter your API keys to enable full functionality")
+    st.info("Enter your API keys to enable full AI functionality")
     
-    # AI Model Provider Selection
     ai_provider = st.selectbox(
         "🤖 Choose AI Provider",
         ["OpenAI", "Google Gemini", "Together AI"],
         help="Select your preferred AI model provider"
     )
     
-    # Conditional API key inputs based on provider
     if ai_provider == "OpenAI":
         ai_key = st.text_input("OpenAI API Key", type="password", help="For GPT models")
         model_name = st.selectbox("Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"])
     elif ai_provider == "Google Gemini":
         ai_key = st.text_input("Google AI API Key", type="password", help="For Gemini models")
         model_name = st.selectbox("Model", ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"])
-    else:  # Together AI
+    else:
         ai_key = st.text_input("Together AI API Key", type="password", help="For open-source models")
         model_name = st.selectbox("Model", ["Qwen/Qwen2.5-Coder-32B-Instruct", "meta-llama/Llama-3.1-70B-Instruct"])
-    
-    # Search API keys
-    st.markdown("**Search APIs:**")
-    serpapi_key = st.text_input("SerpAPI Key", type="password", help="For web search")
-    serper_key = st.text_input("Serper API Key", type="password", help="Alternative search API")
 
 # Trip parameters
-trip_days = st.sidebar.slider("Trip Duration (days)", 2, 7, 4)
-daily_budget_hours = st.sidebar.slider("Daily Travel Budget (hours)", 2, 8, 4)
+trip_days = st.sidebar.slider("Trip Duration (days)", 2, 14, 7)
+daily_budget_hours = st.sidebar.slider("Daily Travel Budget (hours)", 2, 12, 6)
+budget_range = st.sidebar.selectbox("Budget Range", ["Budget ($)", "Mid-range ($$)", "Luxury ($$$)", "Ultra-luxury ($$$$)"])
 
-# Enhanced origin location selection with automatic geocoding
+# Enhanced origin location selection
 st.sidebar.subheader("🌍 Origin Location")
 location_method = st.sidebar.radio(
     "Select Origin Method:",
-    ["🏙️ Choose from Popular Cities", "📍 Enter Location Name", "🗺️ Use Exact Coordinates"]
+    ["🏙️ Popular Cities", "📍 Enter Location", "🗺️ Exact Coordinates"]
 )
 
-# Popular cities with coordinates
 POPULAR_CITIES = {
     "London, UK": (51.5074, -0.1278),
     "New York, USA": (40.7128, -74.0060),
@@ -289,34 +354,28 @@ POPULAR_CITIES = {
     "Sydney, Australia": (-33.8688, 151.2093),
     "Mumbai, India": (19.0760, 72.8777),
     "Delhi, India": (28.6139, 77.2090),
-    "Kolkata, India": (22.5744, 88.3629),
-    "Bangalore, India": (12.9716, 77.5946),
-    "Dubai, UAE": (25.2048, 55.2708),
     "Singapore": (1.3521, 103.8198),
+    "Dubai, UAE": (25.2048, 55.2708),
     "Berlin, Germany": (52.5200, 13.4050),
     "Rome, Italy": (41.9028, 12.4964),
-    "Madrid, Spain": (40.4168, -3.7038),
-    "Amsterdam, Netherlands": (52.3676, 4.9041)
+    "Bangkok, Thailand": (13.7563, 100.5018),
+    "Los Angeles, USA": (34.0522, -118.2437),
+    "Toronto, Canada": (43.6532, -79.3832),
+    "São Paulo, Brazil": (-23.5505, -46.6333)
 }
 
-if location_method == "🏙️ Choose from Popular Cities":
-    selected_city = st.sidebar.selectbox(
-        "Select your departure city:",
-        list(POPULAR_CITIES.keys()),
-        index=7  # Default to Kolkata
-    )
+if location_method == "🏙️ Popular Cities":
+    selected_city = st.sidebar.selectbox("Select your departure city:", list(POPULAR_CITIES.keys()), index=0)
     departure_coords = POPULAR_CITIES[selected_city]
     departure_location = selected_city
     
-elif location_method == "📍 Enter Location Name":
-    # Automatic geocoding for user input
+elif location_method == "📍 Enter Location":
     departure_location = st.sidebar.text_input(
         "Enter any location name:", 
-        "Edinburgh, Scotland",
-        help="Enter any city, landmark, or address - we'll find the coordinates automatically!"
+        "New York City",
+        help="Enter any city, landmark, or address - we'll find coordinates automatically!"
     )
     
-    # Geocode button for manual trigger
     if st.sidebar.button("🔍 Find Coordinates"):
         with st.sidebar.container():
             with st.spinner("Finding coordinates..."):
@@ -328,72 +387,64 @@ elif location_method == "📍 Enter Location Name":
                     st.sidebar.write(f"📍 {lat:.4f}, {lon:.4f}")
                 else:
                     st.sidebar.error("❌ Could not find coordinates. Using default location.")
-                    departure_coords = (22.5744, 88.3629)  # Default to Kolkata
+                    departure_coords = (40.7128, -74.0060)
     else:
-        # Auto-geocode on page load if location is set
-        if departure_location and departure_location != "":
+        if departure_location:
             lat, lon, source = geocode_location_with_fallback(departure_location)
             if lat and lon:
                 departure_coords = (lat, lon)
             else:
-                departure_coords = (22.5744, 88.3629)  # Default
+                departure_coords = (40.7128, -74.0060)
         else:
-            departure_coords = (22.5744, 88.3629)
+            departure_coords = (40.7128, -74.0060)
     
-else:  # Use Exact Coordinates
+else:
     st.sidebar.write("Enter exact coordinates:")
     col_lat, col_lon = st.sidebar.columns(2)
     with col_lat:
-        departure_lat = st.number_input("Latitude", value=22.5744, format="%.4f")
+        departure_lat = st.number_input("Latitude", value=40.7128, format="%.4f")
     with col_lon:
-        departure_lon = st.number_input("Longitude", value=88.3629, format="%.4f")
+        departure_lon = st.number_input("Longitude", value=-74.0060, format="%.4f")
     
     departure_coords = (departure_lat, departure_lon)
     departure_location = f"Custom ({departure_lat:.2f}, {departure_lon:.2f})"
 
-# Display selected origin
 st.sidebar.success(f"📍 Origin: {departure_location}")
 st.sidebar.write(f"Coordinates: {departure_coords[0]:.4f}, {departure_coords[1]:.4f}")
 
-# Transport preferences
 transport_mode = st.sidebar.selectbox(
-    "Preferred Ground Transport",
-    ["car", "train", "mixed"],
+    "Preferred Transport",
+    ["mixed", "car", "train", "plane"],
     help="How you'll travel between locations"
 )
 
 # ==================== AI MODEL FUNCTIONS ====================
 
 def safe_extract_response_text(response):
-    """Safely extract text from Gemini response, handling finish_reason and empty parts"""
-    
+    """Safely extract text from AI response"""
     if not response:
         return "No response received from AI model."
     
     try:
-        # Check if it's a direct text response
         if hasattr(response, 'content') and isinstance(response.content, str):
             return response.content
         elif hasattr(response, 'text') and isinstance(response.text, str):
             return response.text
         
-        # For Gemini API responses, check candidates and finish_reason
         if hasattr(response, 'candidates') and response.candidates:
             candidate = response.candidates[0]
             
-            # Check finish_reason
             if hasattr(candidate, 'finish_reason'):
                 finish_reason = candidate.finish_reason
                 if finish_reason == 1:
-                    return "AI response was cut short (natural stop). Try rephrasing your request or reducing the complexity."
+                    return "AI response was cut short. Try rephrasing your request."
                 elif finish_reason == 2:
-                    return "AI response exceeded token limit. Try breaking down your request into smaller parts."
+                    return "AI response exceeded token limit. Try breaking down your request."
                 elif finish_reason == 3:
                     return "Response blocked for safety reasons. Please rephrase your request."
                 elif finish_reason == 4:
                     return "Response blocked due to recitation concerns. Please try a different approach."
             
-            # Try to extract content from parts
             if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
                 parts = candidate.content.parts
                 if parts and len(parts) > 0:
@@ -405,7 +456,6 @@ def safe_extract_response_text(response):
                     if text_parts:
                         return '\n'.join(text_parts)
         
-        # Fallback: try direct attribute access
         if hasattr(response, 'content'):
             return str(response.content)
         elif hasattr(response, 'text'):
@@ -418,7 +468,6 @@ def safe_extract_response_text(response):
 
 def initialize_ai_model(provider: str, api_key: str, model_name: str):
     """Initialize AI model based on selected provider"""
-    
     if not api_key:
         st.error(f"Please enter your {provider} API key!")
         return None
@@ -435,14 +484,12 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
             os.environ["GOOGLE_API_KEY"] = api_key
             genai.configure(api_key=api_key)
             
-            # Enhanced Gemini wrapper for smolagents compatibility
             class GeminiModel:
                 def __init__(self, model_name):
                     self.model = genai.GenerativeModel(model_name)
                     self.model_name = model_name
                 
                 def __call__(self, messages, **kwargs):
-                    # Handle both string and messages format
                     if isinstance(messages, str):
                         prompt = messages
                     elif isinstance(messages, list) and len(messages) > 0:
@@ -456,7 +503,6 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
                     try:
                         response = self.model.generate_content(prompt)
                         
-                        # Enhanced SafeResponse with better error handling
                         class SafeResponse:
                             def __init__(self, gemini_response):
                                 self.original_response = gemini_response
@@ -465,7 +511,6 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
                                 self._extract_content()
                             
                             def _extract_content(self):
-                                """Extract content safely from Gemini response"""
                                 try:
                                     if (hasattr(self.original_response, 'candidates') and 
                                         self.original_response.candidates and
@@ -488,7 +533,6 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
                                     self._text = self._content
                             
                             def _handle_no_content(self):
-                                """Handle case where no content is returned"""
                                 finish_reason = None
                                 try:
                                     if (hasattr(self.original_response, 'candidates') and 
@@ -521,7 +565,6 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
                         return SafeResponse(response)
                         
                     except Exception as e:
-                        # Return error response object
                         class ErrorResponse:
                             def __init__(self, error_msg):
                                 self.content = f"Gemini model error: {error_msg}"
@@ -531,7 +574,7 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
             
             return GeminiModel(model_name)
             
-        else:  # Together AI
+        else:
             os.environ["TOGETHER_API_KEY"] = api_key
             from smolagents import InferenceClientModel
             return InferenceClientModel(model_name, provider="together", max_tokens=3000)
@@ -540,105 +583,104 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
         st.error(f"Error initializing {provider} model: {str(e)}")
         return None
 
-def generate_ai_travel_plan(model, locations_df: pd.DataFrame, trip_days: int, daily_hours: int):
+def generate_ai_travel_plan(model, locations_df: pd.DataFrame, trip_days: int, daily_hours: int, budget: str):
     """Generate intelligent travel recommendations using AI"""
-    
     if model is None:
         return "Please configure your AI model first."
     
-    # Prepare location data for AI
     location_summary = locations_df.to_string(index=False)
     
     prompt = f"""
-    As an expert travel planner, analyze these filming locations and create an optimal {trip_days}-day itinerary:
+    As an expert travel planner, create an optimal {trip_days}-day itinerary for these destinations:
     
     LOCATIONS DATA:
     {location_summary}
     
-    CONSTRAINTS:
-    - Trip duration: {trip_days} days
+    TRIP PARAMETERS:
+    - Duration: {trip_days} days
     - Daily travel budget: {daily_hours} hours
+    - Budget level: {budget}
     - Minimize travel time between locations
     - Group nearby locations together
-    - Consider practical logistics
     
-    PROVIDE:
-    1. Day-by-day itinerary with specific locations
-    2. Travel time estimates between locations  
-    3. Best airports/transportation hubs to use
-    4. Tips for efficient travel routes
-    5. Must-see vs optional locations priority
+    PROVIDE A COMPREHENSIVE PLAN INCLUDING:
+    1. Day-by-day detailed itinerary with specific locations
+    2. Travel time estimates and best routes between locations
+    3. Recommended airports/transportation hubs
+    4. Budget-appropriate accommodation suggestions
+    5. Must-see vs optional attractions with priority rankings
+    6. Local transportation tips
+    7. Best times to visit each location
+    8. Cultural tips and local customs to know
+    9. Estimated daily costs for {budget} budget
+    10. Emergency contacts and travel safety tips
     
-    Format as a clear, actionable travel plan.
+    Format as a clear, actionable travel plan that's easy to follow.
     """
     
     try:
-        # Universal approach - try different formats
         response = None
         
-        # Method 1: Try string format (Gemini, some custom models)
         try:
             response = model(prompt)
         except (AttributeError, TypeError) as e:
             if "'str' object has no attribute 'role'" in str(e):
-                # Method 2: Try messages format (OpenAI, smolagents)
                 messages = [{"role": "user", "content": prompt}]
                 response = model(messages)
             else:
                 raise e
         
-        # Safe content extraction
         return safe_extract_response_text(response)
             
     except Exception as e:
-        return f"Error generating AI plan: {str(e)}\n\nPlease check your AI model configuration or try a shorter prompt."
+        return f"Error generating AI plan: {str(e)}\n\nPlease check your AI model configuration."
 
-def ai_enhanced_location_search(model, query: str):
-    """Use AI to find and analyze filming locations"""
-    
+def ai_enhanced_location_search(model, query: str, location_type: str):
+    """Use AI to find and analyze travel destinations"""
     if model is None:
         return "Please configure your AI model first."
         
     prompt = f"""
-    Find comprehensive information about filming locations worldwide. 
-    Focus on: {query}
+    Find comprehensive information about travel destinations worldwide based on this query: "{query}"
     
-    For each location provide:
-    1. Exact name and filming details
-    2. Country and nearest major city
-    3. What scenes were filmed there
-    4. Best way to visit (car, train, etc.)
+    Focus on: {location_type} destinations
     
-    Provide at least 10 diverse locations across different countries.
+    For each destination provide:
+    1. Exact name and key highlights
+    2. Country and nearest major city/airport
+    3. Main attractions and activities
+    4. Best time to visit
+    5. Approximate coordinates (latitude, longitude)
+    6. Travel difficulty level and accessibility
+    7. Budget range recommendations
+    
+    Provide at least 12-15 diverse destinations across different countries and continents.
+    Include a mix of popular and hidden gem locations.
+    
     Format as structured data that can be easily parsed.
     """
     
     try:
-        # Universal approach
         response = None
         
-        # Try string format first
         try:
             response = model(prompt)
         except (AttributeError, TypeError) as e:
             if "'str' object has no attribute 'role'" in str(e):
-                # Try messages format
                 messages = [{"role": "user", "content": prompt}]
                 response = model(messages)
             else:
                 raise e
         
-        # Use safe extraction
         return safe_extract_response_text(response)
             
     except Exception as e:
         return f"Error in AI search: {str(e)}"
 
-def calculate_travel_distance(coord1: Tuple[float, float], coord2: Tuple[float, float], transport_mode: str = "car") -> Dict:
+def calculate_travel_distance(coord1: Tuple[float, float], coord2: Tuple[float, float], transport_mode: str = "mixed") -> Dict:
     """Calculate distance and travel time between two coordinates"""
-    
     def haversine_distance(lat1, lon1, lat2, lon2):
-        R = 6371  # Earth's radius in km
+        R = 6371
         lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
         dlat = lat2 - lat1
         dlon = lon2 - lon1
@@ -648,9 +690,8 @@ def calculate_travel_distance(coord1: Tuple[float, float], coord2: Tuple[float, 
     
     distance = haversine_distance(coord1[0], coord1[1], coord2[0], coord2[1])
     
-    # Estimate travel times based on transport mode
     speeds = {"car": 70, "train": 100, "plane": 500, "mixed": 85}
-    travel_time = distance / speeds.get(transport_mode, 70)
+    travel_time = distance / speeds.get(transport_mode, 85)
     
     return {
         "distance_km": round(distance, 2),
@@ -658,32 +699,65 @@ def calculate_travel_distance(coord1: Tuple[float, float], coord2: Tuple[float, 
         "transport_mode": transport_mode
     }
 
-# ==================== SAMPLE DATA ====================
-
-# Enhanced sample locations with more details
-SAMPLE_LOCATIONS = {
-    "Hogwarts - Alnwick Castle": (55.4180, -1.7065, "England"),
-    "Platform 9¾ - King's Cross Station": (51.5308, -0.1238, "England"), 
-    "Diagon Alley - Leadenhall Market": (51.5131, -0.0834, "England"),
-    "Hogwarts Express - Glenfinnan Viaduct": (56.8783, -5.4318, "Scotland"),
-    "Great Hall - Christ Church Oxford": (51.7501, -1.2544, "England"),
-    "Hogwarts Corridors - Gloucester Cathedral": (51.8607, -2.2431, "England"),
-    "Professor Snape's House - Lacock Abbey": (51.4148, -2.1187, "England"),
-    "Hogwarts Courtyard - Durham Cathedral": (54.7737, -1.5755, "England"),
-    "Quidditch Scenes - Cliffs of Moher": (52.9715, -9.4265, "Ireland"),
-    "Forbidden Forest - Ashridge Estate": (51.7833, -0.5833, "England")
-}
-
 # ==================== MAIN APPLICATION ====================
+
+# Show travel examples
+st.header("🌟 Popular Travel Themes")
+st.markdown("Get inspired by these curated travel themes or create your own custom adventure!")
+
+# Display travel examples in a nice grid
+example_cols = st.columns(3)
+for i, (theme_name, theme_data) in enumerate(TRAVEL_EXAMPLES.items()):
+    with example_cols[i % 3]:
+        with st.container():
+            st.markdown(f"""
+            <div class="example-card">
+                <h4>{theme_name}</h4>
+                <p>{theme_data['description']}</p>
+                <small>{len(theme_data['locations'])} destinations</small>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button(f"Use {theme_name}", key=f"example_{i}"):
+                # Load example locations into session state
+                location_data = []
+                for name, (lat, lon) in theme_data['locations'].items():
+                    travel_info = calculate_travel_distance(departure_coords, (lat, lon), transport_mode)
+                    
+                    # Extract country from location name
+                    country = name.split(', ')[-1] if ', ' in name else "Unknown"
+                    
+                    location_data.append({
+                        "Location": name,
+                        "Country": country,
+                        "Type": theme_name.split(' ')[-1],  # Extract theme type
+                        "Latitude": lat,
+                        "Longitude": lon,
+                        "Distance (km)": travel_info["distance_km"],
+                        "Travel Time (hrs)": travel_info["travel_time_hours"],
+                        "Transport": travel_info["transport_mode"]
+                    })
+                
+                df = pd.DataFrame(location_data)
+                df = clean_dataframe_columns(df)
+                
+                st.session_state.locations_df = df
+                st.session_state.departure_info = {
+                    "location": departure_location,
+                    "coords": departure_coords
+                }
+                
+                st.success(f"✅ Loaded {len(location_data)} destinations from {theme_name}!")
+                st.rerun()
 
 # Main application layout
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.header("🏰 Filming Locations")
+    st.header("🗺️ Travel Destinations")
     
     # AI Model initialization
-    if ai_key:
+    if 'ai_key' in locals() and ai_key:
         model = initialize_ai_model(ai_provider, ai_key, model_name)
         if model:
             st.success(f"✅ {ai_provider} {model_name} initialized successfully!")
@@ -691,55 +765,53 @@ with col1:
         model = None
         st.warning(f"⚠️ Please enter your {ai_provider} API key to enable AI features")
     
-    # Enhanced search options with custom locations
+    # Enhanced search options
     search_option = st.radio(
-        "Search Method:",
-        ["🔍 Quick Search (Demo Data)", "🤖 AI-Powered Search", "🌐 Web Search + AI Analysis", "📍 Custom Locations"],
-        help="Choose how to find locations"
+        "How would you like to plan your trip?",
+        ["🎯 Use Travel Themes Above", "🤖 AI-Powered Destination Search", "🌐 Web Search + AI Analysis", "📍 Custom Destinations + Discovery"],
+        help="Choose your preferred method to find amazing destinations"
     )
 
-    # ENHANCED CUSTOM LOCATIONS INPUT SECTION with Nearby Places Discovery
-    if search_option == "📍 Custom Locations":
-        st.subheader("📍 Add Your Custom Location & Discover Nearby Places")
-        st.info("💡 **New Feature**: Add a location and we'll find 10 interesting nearby places to visit!")
-        
-        st.write("**Add your custom destination:**")
+    # CUSTOM DESTINATIONS WITH NEARBY DISCOVERY
+    if search_option == "📍 Custom Destinations + Discovery":
+        st.subheader("📍 Create Your Custom Travel Experience")
+        st.info("💡 **New Feature**: Add any destination and we'll discover amazing nearby places to visit!")
         
         # Initialize custom locations in session state
         if 'custom_locations_input' not in st.session_state:
             st.session_state.custom_locations_input = []
         
-        # Form to add custom locations WITH AUTO-GEOCODING AND NEARBY DISCOVERY
-        with st.form("add_custom_location"):
+        # Form to add custom locations
+        with st.form("add_custom_destination"):
             col1_form, col2_form = st.columns(2)
             with col1_form:
-                custom_name = st.text_input("Location Name", placeholder="e.g., Edinburgh Castle, Central Park, Eiffel Tower")
-                custom_country = st.text_input("Country (optional)", placeholder="e.g., Scotland")
+                custom_name = st.text_input("Destination Name", placeholder="e.g., Tokyo, Paris, Grand Canyon, Machu Picchu")
+                custom_country = st.text_input("Country (optional)", placeholder="e.g., Japan, France, USA, Peru")
             with col2_form:
                 discovery_method = st.selectbox(
                     "Nearby Places Discovery",
                     ["AI + Web APIs", "AI Only", "Web APIs Only", "None"],
-                    help="How to find nearby places"
+                    help="How to find nearby attractions"
                 )
-                radius_km = st.slider("Search Radius (km)", 5, 100, 25, help="How far to search for nearby places")
+                radius_km = st.slider("Search Radius (km)", 10, 200, 50, help="How far to search for nearby places")
             
-            custom_description = st.text_area("Description (optional)", placeholder="What makes this location special?")
+            custom_description = st.text_area("What interests you? (optional)", placeholder="Historical sites, nature, food, adventure, culture...")
             
-            submitted = st.form_submit_button("➕ Add Location & Find Nearby Places")
+            submitted = st.form_submit_button("➕ Add Destination & Discover Nearby Places")
             
             if submitted and custom_name:
-                with st.spinner(f"Finding coordinates for {custom_name}..."):
+                with st.spinner(f"Finding {custom_name} and discovering nearby attractions..."):
                     # Auto-geocode the location
                     lat, lon, source = geocode_location_with_fallback(custom_name)
                     
                     if lat and lon:
-                        # Clear previous custom locations (we want only one main location + nearby)
+                        # Clear previous locations for new search
                         st.session_state.custom_locations_input = []
                         
-                        # Add main location
+                        # Add main destination
                         main_location = {
                             "name": custom_name,
-                            "country": custom_country or "Unknown",
+                            "country": custom_country or custom_name.split(', ')[-1] if ', ' in custom_name else "Unknown",
                             "lat": lat,
                             "lon": lon,
                             "description": custom_description,
@@ -748,7 +820,7 @@ with col1:
                         }
                         st.session_state.custom_locations_input.append(main_location)
                         
-                        # Find nearby places based on selected method
+                        # Find nearby places
                         nearby_places = []
                         
                         if discovery_method in ["AI + Web APIs", "AI Only"]:
@@ -756,15 +828,17 @@ with col1:
                                 with st.spinner("AI is discovering nearby attractions..."):
                                     ai_places = find_nearby_places_with_ai(model, custom_name, lat, lon, radius_km)
                                     nearby_places.extend(ai_places)
-                                    st.success(f"AI found {len(ai_places)} nearby places!")
+                                    if ai_places:
+                                        st.success(f"🤖 AI found {len(ai_places)} nearby places!")
                             else:
                                 st.warning("AI model not configured. Using web APIs only.")
                         
                         if discovery_method in ["AI + Web APIs", "Web APIs Only"]:
-                            with st.spinner("Searching web databases for nearby places..."):
+                            with st.spinner("Searching databases for nearby attractions..."):
                                 web_places = find_nearby_places_with_api(lat, lon, radius_km)
                                 nearby_places.extend(web_places)
-                                st.success(f"Web APIs found {len(web_places)} additional places!")
+                                if web_places:
+                                    st.success(f"🌐 Found {len(web_places)} places from web databases!")
                         
                         # Remove duplicates and add nearby places
                         seen_names = {main_location["name"].lower()}
@@ -772,25 +846,26 @@ with col1:
                         
                         for place in nearby_places:
                             place_name_lower = place["name"].lower()
-                            if place_name_lower not in seen_names:
+                            if place_name_lower not in seen_names and len(place_name_lower) > 2:
                                 seen_names.add(place_name_lower)
+                                place["country"] = main_location["country"]
                                 place["type"] = f"Nearby {place.get('type', 'Attraction')}"
                                 unique_nearby.append(place)
                         
-                        # Limit to 10 nearby places
-                        st.session_state.custom_locations_input.extend(unique_nearby[:10])
+                        # Add up to 15 nearby places
+                        st.session_state.custom_locations_input.extend(unique_nearby[:15])
                         
                         total_found = len(st.session_state.custom_locations_input)
-                        st.success(f"✅ Added {custom_name} + {total_found-1} nearby places!")
+                        st.success(f"✅ Found {custom_name} + {total_found-1} amazing nearby places!")
                         st.rerun()
                     else:
                         st.error(f"❌ Could not find coordinates for '{custom_name}'. Please try a more specific location name.")
         
         # Display current custom locations
         if st.session_state.custom_locations_input:
-            st.write(f"**Your Destination & Nearby Places ({len(st.session_state.custom_locations_input)} total):**")
+            st.write(f"**Your Travel Destinations ({len(st.session_state.custom_locations_input)} total):**")
             
-            # Show main destination first
+            # Separate main and nearby locations
             main_locations = [loc for loc in st.session_state.custom_locations_input if loc.get("type") == "Main Destination"]
             nearby_locations = [loc for loc in st.session_state.custom_locations_input if loc.get("type") != "Main Destination"]
             
@@ -802,159 +877,186 @@ with col1:
                     st.write(f"• **{loc['name']}** ({loc['country']}) - {loc['lat']:.4f}, {loc['lon']:.4f}")
                     if loc['description']:
                         st.write(f"  _{loc['description']}_")
-                    st.caption(f"Coordinates found via: {loc.get('geocoded_source', 'manual')}")
+                    st.caption(f"📍 Coordinates found via: {loc.get('geocoded_source', 'manual')}")
                 with col_remove:
-                    if st.button("🗑️", key=f"remove_main_{i}", help="Remove all locations"):
+                    if st.button("🗑️ Clear All", key=f"remove_main_{i}"):
                         st.session_state.custom_locations_input = []
                         st.rerun()
             
             # Display nearby places
             if nearby_locations:
                 st.markdown(f"**🌟 Nearby Places to Visit ({len(nearby_locations)}):**")
-                for i, loc in enumerate(nearby_locations):
-                    col_info, col_remove = st.columns([5, 1])
-                    with col_info:
-                        st.write(f"• **{loc['name']}** - {loc['lat']:.4f}, {loc['lon']:.4f}")
-                        st.caption(f"Type: {loc.get('type', 'Attraction')} | Source: {loc.get('source', 'unknown')}")
-                    with col_remove:
-                        if st.button("🗑️", key=f"remove_nearby_{i}", help="Remove this place"):
-                            st.session_state.custom_locations_input.pop(len(main_locations) + i)
-                            st.rerun()
+                
+                # Show in a more compact format
+                for i in range(0, len(nearby_locations), 3):
+                    cols = st.columns(3)
+                    for j, col in enumerate(cols):
+                        if i + j < len(nearby_locations):
+                            loc = nearby_locations[i + j]
+                            with col:
+                                st.write(f"**{loc['name']}**")
+                                st.caption(f"{loc.get('type', 'Attraction')} | {loc.get('source', 'unknown')}")
+                                if st.button("❌", key=f"remove_nearby_{i+j}", help="Remove this place"):
+                                    # Find index in main list and remove
+                                    for idx, main_loc in enumerate(st.session_state.custom_locations_input):
+                                        if main_loc['name'] == loc['name']:
+                                            st.session_state.custom_locations_input.pop(idx)
+                                            break
+                                    st.rerun()
             
-            # Button to find more nearby places
-            if main_locations:
-                if st.button("🔍 Find More Nearby Places"):
-                    main_loc = main_locations[0]
-                    with st.spinner("Finding more nearby places..."):
-                        if model:
-                            new_places = find_nearby_places_with_ai(model, main_loc["name"], main_loc["lat"], main_loc["lon"], 30)
-                            # Add only new places
-                            existing_names = {loc["name"].lower() for loc in st.session_state.custom_locations_input}
-                            for place in new_places:
-                                if place["name"].lower() not in existing_names:
-                                    place["type"] = f"Nearby {place.get('type', 'Attraction')}"
-                                    st.session_state.custom_locations_input.append(place)
-                            st.rerun()
-
-    search_query = st.text_input(
-        "Search Query (optional):", 
-        "Filming locations worldwide" if search_option == "📍 Custom Locations" else "Harry Potter filming locations worldwide",
-        help="Customize your search query"
-    )
-    
-    # Enhanced search button logic with custom locations support and auto-geocoding
-    if st.button("🔍 Process My Destination & Nearby Places" if search_option == "📍 Custom Locations" else "🔍 Find Locations", key="search_btn"):
-        with st.spinner("Processing locations..."):
-            
-            # Determine which locations to use
-            all_locations = {}
-            
-            if search_option == "📍 Custom Locations":
-                # Use ONLY custom locations (main + nearby places)
-                if st.session_state.custom_locations_input:
-                    # Convert custom locations to the expected format
+            # Button to process current locations
+            if st.button("🚀 Create Travel Plan with These Destinations", key="process_custom"):
+                with st.spinner("Processing your custom destinations..."):
+                    all_locations = {}
                     for loc in st.session_state.custom_locations_input:
                         all_locations[loc["name"]] = (loc["lat"], loc["lon"], loc["country"])
                     
-                    main_count = len([loc for loc in st.session_state.custom_locations_input if loc.get("type") == "Main Destination"])
-                    nearby_count = len(st.session_state.custom_locations_input) - main_count
-                    
-                    st.info(f"Processing {main_count} main destination + {nearby_count} nearby places")
-                else:
-                    st.warning("Please add a custom location first to discover nearby places.")
-                    st.stop()
-                    
-            else:
-                # Use Harry Potter locations for other search methods
-                all_locations = SAMPLE_LOCATIONS.copy()
-                
-                if search_option == "🔍 Quick Search (Demo Data)":
-                    st.info("Using Harry Potter demo data")
-                elif search_option == "🤖 AI-Powered Search":
-                    if model:
-                        st.info("Using AI to find and analyze Harry Potter locations...")
-                        ai_results = ai_enhanced_location_search(model, search_query)
-                        st.text_area("AI Search Results:", ai_results, height=200)
-                    else:
-                        st.error("Please configure your AI model first!")
+                    # Process locations
+                    location_data = []
+                    for name, (lat, lon, country) in all_locations.items():
+                        travel_info = calculate_travel_distance(departure_coords, (lat, lon), transport_mode)
                         
-                else:  # Web Search + AI Analysis
-                    if model and (serpapi_key or serper_key):
-                        st.info("Combining web search with AI analysis...")
-                        st.warning("Web search integration requires full smolagents setup")
-                    else:
-                        st.error("Please configure both AI model and search API keys!")
-            
-            # Process all locations (only if we have locations to process)
-            if all_locations:
-                location_data = []
-                
-                for name, (lat, lon, country) in all_locations.items():
-                    travel_info = calculate_travel_distance(departure_coords, (lat, lon), transport_mode)
-                    
-                    # Determine location type for custom locations
-                    if search_option == "📍 Custom Locations":
-                        # Find the location type from session state
+                        # Find location type
                         location_type = "Nearby Attraction"
                         for loc in st.session_state.custom_locations_input:
                             if loc["name"] == name:
-                                if loc.get("type") == "Main Destination":
-                                    location_type = "Main Destination"
-                                else:
-                                    location_type = loc.get("type", "Nearby Attraction")
+                                location_type = loc.get("type", "Attraction")
                                 break
-                    else:
-                        location_type = "Harry Potter"
+                        
+                        location_data.append({
+                            "Location": name,
+                            "Country": country,
+                            "Type": location_type,
+                            "Latitude": lat,
+                            "Longitude": lon,
+                            "Distance (km)": travel_info["distance_km"],
+                            "Travel Time (hrs)": travel_info["travel_time_hours"],
+                            "Transport": travel_info["transport_mode"]
+                        })
                     
-                    location_data.append({
-                        "Location": name,
-                        "Country": country,
-                        "Type": location_type,
-                        "Latitude": lat,
-                        "Longitude": lon,
-                        "Distance (km)": travel_info["distance_km"],
-                        "Travel Time (hrs)": travel_info["travel_time_hours"],
-                        "Transport": travel_info["transport_mode"]
-                    })
-                
-                df = pd.DataFrame(location_data)
-                # FIXED: Clean column names to prevent KeyError
-                df = clean_dataframe_columns(df)
-                
-                st.session_state.locations_df = df
-                st.session_state.departure_info = {
-                    "location": departure_location,
-                    "coords": departure_coords
-                }
-                
-                if search_option == "📍 Custom Locations":
+                    df = pd.DataFrame(location_data)
+                    df = clean_dataframe_columns(df)
+                    
+                    st.session_state.locations_df = df
+                    st.session_state.departure_info = {
+                        "location": departure_location,
+                        "coords": departure_coords
+                    }
+                    
                     main_count = len([loc for loc in location_data if "Main Destination" in loc["Type"]])
                     nearby_count = len(location_data) - main_count
-                    st.success(f"Processed {len(all_locations)} total locations! ({main_count} main destination, {nearby_count} nearby places)")
-                else:
-                    st.success(f"Found {len(all_locations)} Harry Potter filming locations!")
+                    st.success(f"✅ Created travel plan with {len(all_locations)} destinations! ({main_count} main, {nearby_count} nearby)")
+                    st.rerun()
+
+    # AI-powered search options
+    elif search_option == "🤖 AI-Powered Destination Search":
+        st.subheader("🤖 AI Travel Discovery")
+        
+        col_search1, col_search2 = st.columns(2)
+        with col_search1:
+            search_query = st.text_input(
+                "What kind of trip do you want?", 
+                "Amazing cultural destinations in Asia",
+                help="Describe your ideal trip - be specific!"
+            )
+            
+            trip_type = st.selectbox(
+                "Trip Style",
+                ["Cultural & Historical", "Adventure & Nature", "Beach & Relaxation", "City & Urban", "Food & Culinary", "Art & Architecture", "Spiritual & Wellness", "Off-the-beaten-path"]
+            )
+        
+        with col_search2:
+            continent_filter = st.multiselect(
+                "Preferred Continents (optional)",
+                ["Asia", "Europe", "North America", "South America", "Africa", "Oceania", "Antarctica"],
+                help="Leave empty for worldwide search"
+            )
+            
+            difficulty_level = st.selectbox(
+                "Travel Difficulty",
+                ["Easy (tourist-friendly)", "Moderate (some planning needed)", "Challenging (adventure required)"]
+            )
+        
+        if st.button("🔍 Discover Amazing Destinations", key="ai_search_btn"):
+            if model:
+                with st.spinner("AI is finding perfect destinations for you..."):
+                    # Enhanced search query
+                    enhanced_query = f"{search_query} - Focus on {trip_type} destinations"
+                    if continent_filter:
+                        enhanced_query += f" in {', '.join(continent_filter)}"
+                    enhanced_query += f" with {difficulty_level} accessibility"
+                    
+                    ai_results = ai_enhanced_location_search(model, enhanced_query, trip_type)
+                    st.text_area("🤖 AI Discovery Results:", ai_results, height=300)
+                    
+                    # Try to parse and create locations (basic implementation)
+                    st.info("💡 AI has found amazing destinations! Copy interesting location names to the Custom Destinations section above to add them to your trip.")
             else:
-                st.error("No locations to process!")
+                st.error("Please configure your AI model first!")
     
+    elif search_option == "🌐 Web Search + AI Analysis":
+        st.subheader("🌐 Advanced Web Search + AI Analysis")
+        st.info("This feature combines real-time web search with AI analysis for the most up-to-date travel information.")
+        
+        search_query = st.text_input(
+            "Search for travel destinations:", 
+            "Best travel destinations 2025",
+            help="Enter your travel search query"
+        )
+        
+        if st.button("🔍 Search Web + Analyze with AI", key="web_search_btn"):
+            if model:
+                st.warning("🚧 Web search integration requires additional API setup. For now, please use the AI-powered search or custom destinations options.")
+            else:
+                st.error("Please configure your AI model first!")
+    
+    else:  # Use Travel Themes Above
+        st.info("👆 Click on any travel theme above to instantly load those destinations, or use the other search options below.")
+
     # Display results if available
     if 'locations_df' in st.session_state:
-        st.subheader("📊 Location Data")
+        st.subheader("📊 Your Travel Destinations")
         
         # Show departure info
         if 'departure_info' in st.session_state:
             dep_info = st.session_state.departure_info
             st.info(f"📍 Origin: {dep_info['location']} ({dep_info['coords'][0]:.2f}, {dep_info['coords'][1]:.2f})")
         
-        st.dataframe(st.session_state.locations_df, use_container_width=True)
+        # Display dataframe with better formatting
+        df_display = st.session_state.locations_df.copy()
+        df_display = df_display.round(2)
         
-        # Download button
-        csv = st.session_state.locations_df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download CSV",
-            data=csv,
-            file_name=f"travel_locations_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
-        )
+        st.dataframe(df_display, use_container_width=True, height=400)
+        
+        # Download options
+        col_download1, col_download2 = st.columns(2)
+        with col_download1:
+            csv = st.session_state.locations_df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name=f"travel_destinations_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+        
+        with col_download2:
+            # Create a simple text itinerary
+            text_itinerary = f"Travel Itinerary - {datetime.now().strftime('%Y-%m-%d')}\n"
+            text_itinerary += f"Origin: {st.session_state.departure_info['location']}\n"
+            text_itinerary += f"Trip Duration: {trip_days} days\n"
+            text_itinerary += f"Budget Level: {budget_range}\n\n"
+            
+            for _, row in st.session_state.locations_df.iterrows():
+                text_itinerary += f"• {row['location']} ({row['country']})\n"
+                text_itinerary += f"  Distance: {row['distance (km)']} km, Travel time: {row['travel time (hrs)']} hrs\n"
+                text_itinerary += f"  Type: {row['type']}\n\n"
+            
+            st.download_button(
+                label="📝 Download Itinerary",
+                data=text_itinerary,
+                file_name=f"travel_itinerary_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain"
+            )
 
 with col2:
     st.header("📈 Trip Analytics")
@@ -962,63 +1064,115 @@ with col2:
     if 'locations_df' in st.session_state:
         df = st.session_state.locations_df
         
-        # FIXED: Clean columns if not already cleaned
         if any(col != col.lower().strip() for col in df.columns):
             df = clean_dataframe_columns(df)
             st.session_state.locations_df = df
         
-        # Statistics
-        st.metric("Total Locations", len(df))
-        st.metric("Average Distance", f"{df['distance (km)'].mean():.0f} km")
-        st.metric("Closest Location", df.loc[df['distance (km)'].idxmin(), 'location'])
+        # Enhanced statistics with styling
+        total_locations = len(df)
+        avg_distance = df['distance (km)'].mean()
+        closest_location = df.loc[df['distance (km)'].idxmin(), 'location']
+        total_travel_time = df['travel time (hrs)'].sum()
         
-        # Show location type breakdown
+        # Styled metrics
+        st.markdown(f"""
+        <div class="stat-card">
+            <h3>{total_locations}</h3>
+            <p>Total Destinations</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="stat-card">
+            <h3>{avg_distance:.0f} km</h3>
+            <p>Average Distance</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="stat-card">
+            <h3>{total_travel_time:.1f} hrs</h3>
+            <p>Total Travel Time</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.write(f"**🎯 Closest Destination:** {closest_location}")
+        
+        # Location type breakdown
         if 'type' in df.columns:
             type_counts = df['type'].value_counts()
-            st.write("**Location Types:**")
+            st.write("**📊 Destination Types:**")
             for loc_type, count in type_counts.items():
-                st.write(f"• {loc_type}: {count}")
+                percentage = (count / total_locations) * 100
+                st.write(f"• {loc_type}: {count} ({percentage:.0f}%)")
         
-        # Feasibility analysis
-        max_daily_distance = daily_budget_hours * 70  # Assuming 70 km/h average
+        # Enhanced feasibility analysis
+        max_daily_distance = daily_budget_hours * 70
         feasible_locations = df[df['distance (km)'] <= max_daily_distance * trip_days]
         
         st.subheader("🎯 Trip Feasibility")
-        st.write(f"**Feasible locations for {trip_days}-day trip:** {len(feasible_locations)}")
-        st.write(f"**Daily travel budget:** {daily_budget_hours} hours ({max_daily_distance:.0f} km)")
+        st.write(f"**Feasible for {trip_days}-day trip:** {len(feasible_locations)}/{total_locations}")
+        st.write(f"**Daily travel budget:** {daily_budget_hours} hours")
+        st.write(f"**Max daily distance:** {max_daily_distance:.0f} km")
         
         feasibility_score = len(feasible_locations) / len(df) if len(df) > 0 else 0
         st.progress(feasibility_score)
-        st.write(f"**Feasibility Score:** {feasibility_score:.1%}")
+        
+        if feasibility_score >= 0.8:
+            st.success(f"✅ Excellent feasibility ({feasibility_score:.0%})")
+        elif feasibility_score >= 0.6:
+            st.warning(f"⚠️ Good feasibility ({feasibility_score:.0%})")
+        else:
+            st.error(f"❌ Challenging feasibility ({feasibility_score:.0%})")
+        
+        # Budget estimation
+        st.subheader("💰 Budget Estimation")
+        budget_multipliers = {
+            "Budget ($)": 50,
+            "Mid-range ($)": 100,
+            "Luxury ($$)": 200,
+            "Ultra-luxury ($$)": 500
+        }
+        
+        daily_budget = budget_multipliers.get(budget_range, 100)
+        total_budget = daily_budget * trip_days
+        
+        st.write(f"**Estimated daily cost:** ${daily_budget}")
+        st.write(f"**Total trip budget:** ${total_budget:,}")
+        st.caption("*Estimates include accommodation, food, and activities")
 
-# Enhanced map visualization with location type colors
+# Enhanced map visualization
 if 'locations_df' in st.session_state:
-    st.header("🗺️ Interactive Map")
+    st.header("🗺️ Interactive Travel Map")
     
     df = st.session_state.locations_df
     
-    # FIXED: Clean columns if needed
     if any(col != col.lower().strip() for col in df.columns):
         df = clean_dataframe_columns(df)
     
     if df.empty:
-        st.error("No location data available. Please search for locations first.")
+        st.error("No location data available. Please search for destinations first.")
     else:
-        st.write(f"Showing {len(df)} locations on map")
+        st.write(f"📍 Showing {len(df)} destinations on interactive map")
         
-        # Enhanced Plotly map with location type colors
         try:
-            # Enhanced color mapping for the new location types
+            # Enhanced color mapping for different destination types
             color_discrete_map = {
-                "harry potter": "#722F37",        # Maroon for HP locations
-                "main destination": "#FF6B35",    # Orange for main destination
-                "nearby attraction": "#2E8B57",   # Sea Green for nearby places
-                "nearby historical": "#4169E1",   # Royal Blue for historical sites
-                "nearby cultural": "#9932CC",     # Dark Violet for cultural sites
-                "nearby natural": "#228B22",      # Forest Green for natural attractions
+                "main destination": "#FF6B35",
+                "nearby attraction": "#2E8B57",
+                "nearby cultural": "#9932CC",
+                "nearby historical": "#4169E1",
+                "nearby natural": "#228B22",
+                "nearby entertainment": "#FF1493",
+                "cultural & historical": "#8B4513",
+                "adventure & nature": "#006400",
+                "beach & relaxation": "#00CED1",
+                "city & urban": "#4682B4",
+                "food & culinary": "#FF8C00",
+                "art & architecture": "#9370DB",
             }
             
-            # Create map with different colors for location types
+            # Create enhanced map
             fig = px.scatter_mapbox(
                 df,
                 lat="latitude",
@@ -1028,14 +1182,18 @@ if 'locations_df' in st.session_state:
                 color="type" if 'type' in df.columns else "country",
                 size="distance (km)",
                 color_discrete_map=color_discrete_map,
-                size_max=25,
-                zoom=2,
+                size_max=30,
+                zoom=1,
                 height=700,
-                title="Travel Destinations Map (Auto-Geocoded Locations)",
-                labels={"distance (km)": "Distance from Origin (km)"}
+                title="🌍 Your Travel Destinations Map",
+                labels={
+                    "distance (km)": "Distance from Origin (km)",
+                    "travel time (hrs)": "Travel Time (hours)",
+                    "type": "Destination Type"
+                }
             )
             
-            # Add origin marker
+            # Add origin marker with enhanced styling
             if 'departure_info' in st.session_state:
                 dep_coords = st.session_state.departure_info['coords']
                 dep_location = st.session_state.departure_info['location']
@@ -1045,24 +1203,24 @@ if 'locations_df' in st.session_state:
                     lon=[dep_coords[1]],
                     mode='markers',
                     marker=dict(
-                        size=20, 
+                        size=25, 
                         color='red', 
                         symbol='star',
-                        opacity=0.8
+                        opacity=0.9
                     ),
-                    text=[f"Origin: {dep_location}"],
+                    text=[f"🏠 Origin: {dep_location}"],
                     hoverinfo='text',
-                    name="🏠 Origin",
+                    name="🏠 Your Origin",
                     showlegend=True
                 ))
             
-            # Enhanced layout configuration
+            # Enhanced layout
             fig.update_layout(
                 mapbox_style="open-street-map",
                 mapbox=dict(
                     bearing=0,
                     pitch=0,
-                    zoom=2,
+                    zoom=1,
                     center=dict(
                         lat=df['latitude'].mean(),
                         lon=df['longitude'].mean()
@@ -1074,43 +1232,53 @@ if 'locations_df' in st.session_state:
                     yanchor="top",
                     y=0.99,
                     xanchor="left",
-                    x=0.01
+                    x=0.01,
+                    bgcolor="rgba(255,255,255,0.8)"
                 )
             )
             
-            # Display the map
             st.plotly_chart(fig, use_container_width=True)
+            
+            # Map controls
+            col_map1, col_map2, col_map3 = st.columns(3)
+            with col_map1:
+                if st.button("🌍 Zoom to Fit All"):
+                    st.rerun()
+            with col_map2:
+                if st.button("📍 Center on Origin"):
+                    st.rerun()
+            with col_map3:
+                map_style = st.selectbox("Map Style", ["open-street-map", "carto-positron", "carto-darkmatter", "stamen-terrain"])
             
         except Exception as e:
             st.error(f"Error displaying interactive map: {e}")
-            # Fallback: Simple map
+            # Fallback simple map
             st.subheader("📍 Simple Map View")
             map_data = df[['latitude', 'longitude', 'location']].copy()
             map_data = map_data.rename(columns={'latitude': 'lat', 'longitude': 'lon'})
-            st.map(map_data)
+            st.map(map_data, zoom=2)
 
-# AI-powered itinerary planner (session state issue fixed)
+# AI-powered itinerary planner
 if 'locations_df' in st.session_state:
     st.header("🤖 AI Travel Planner")
     
     col_ai1, col_ai2 = st.columns([2, 1])
     
     with col_ai1:
-        # Initialize plan counter if not exists
         if 'plan_counter' not in st.session_state:
             st.session_state.plan_counter = 0
             
-        # Generate AI Travel Plan button
         generate_plan = st.button("✨ Generate AI Travel Plan", key=f"ai_plan_{st.session_state.plan_counter}")
         
         if generate_plan:
             if model:
-                with st.spinner("AI is crafting your magical itinerary..."):
+                with st.spinner("🤖 AI is crafting your perfect itinerary..."):
                     ai_plan = generate_ai_travel_plan(
                         model, 
                         st.session_state.locations_df, 
                         trip_days, 
-                        daily_budget_hours
+                        daily_budget_hours,
+                        budget_range
                     )
                     st.session_state.travel_plan = ai_plan
                     st.session_state.plan_counter += 1
@@ -1122,29 +1290,55 @@ if 'locations_df' in st.session_state:
         ai_model_info = model_name if 'model_name' in locals() else 'None'
         st.info(f"🎯 Using {ai_provider} {ai_model_info}")
         st.write(f"📅 {trip_days} days, {daily_budget_hours}h/day")
+        st.write(f"💰 {budget_range} budget")
     
     # Display AI-generated plan
     if 'travel_plan' in st.session_state:
-        st.subheader("🗓️ Your Personalized Itinerary")
-        st.markdown(st.session_state.travel_plan)
+        st.subheader("🗓️ Your Personalized AI Itinerary")
         
-        # Option to regenerate with different parameters
-        regenerate_plan = st.button("🔄 Regenerate Plan", key=f"regen_plan_{st.session_state.plan_counter}")
+        # Show the plan in an expandable section
+        with st.expander("📋 Full Itinerary (Click to expand)", expanded=True):
+            st.markdown(st.session_state.travel_plan)
         
-        if regenerate_plan:
-            if model:
-                with st.spinner("Creating alternative plan..."):
-                    ai_plan = generate_ai_travel_plan(
-                        model, 
-                        st.session_state.locations_df, 
-                        trip_days, 
-                        daily_budget_hours
-                    )
-                    st.session_state.travel_plan = ai_plan
-                    st.session_state.plan_counter += 1
-                    st.rerun()
-            else:
-                st.error("Please configure your AI model first!")
+        # Plan management buttons
+        col_plan1, col_plan2, col_plan3 = st.columns(3)
+        
+        with col_plan1:
+            regenerate_plan = st.button("🔄 Regenerate Plan", key=f"regen_plan_{st.session_state.plan_counter}")
+            
+            if regenerate_plan:
+                if model:
+                    with st.spinner("Creating alternative plan..."):
+                        ai_plan = generate_ai_travel_plan(
+                            model, 
+                            st.session_state.locations_df, 
+                            trip_days, 
+                            daily_budget_hours,
+                            budget_range
+                        )
+                        st.session_state.travel_plan = ai_plan
+                        st.session_state.plan_counter += 1
+                        st.rerun()
+                else:
+                    st.error("Please configure your AI model first!")
+        
+        with col_plan2:
+            # Download the AI plan
+            plan_text = f"AI Travel Plan - {datetime.now().strftime('%Y-%m-%d')}\n\n"
+            plan_text += st.session_state.travel_plan
+            
+            st.download_button(
+                label="💾 Download Plan",
+                data=plan_text,
+                file_name=f"ai_travel_plan_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain"
+            )
+        
+        with col_plan3:
+            if st.button("🗑️ Clear Plan"):
+                if 'travel_plan' in st.session_state:
+                    del st.session_state.travel_plan
+                st.rerun()
 
 # Traditional itinerary planner (fallback)
 if 'locations_df' in st.session_state:
@@ -1152,77 +1346,207 @@ if 'locations_df' in st.session_state:
     
     df = st.session_state.locations_df
     
-    # FIXED: Clean columns if needed
     if any(col != col.lower().strip() for col in df.columns):
         df = clean_dataframe_columns(df)
     
-    df = df.sort_values('distance (km)')  # Note: now lowercase
+    df_sorted = df.sort_values('distance (km)')
     
     # Group locations by country and proximity
-    countries = df['country'].unique()  # Note: now lowercase
+    countries = df_sorted['country'].unique()
+    
+    st.write(f"**Suggested {trip_days}-day itinerary based on proximity:**")
     
     for i, country in enumerate(countries[:trip_days]):
-        with st.expander(f"Day {i+1}: {country}"):
-            country_locations = df[df['country'] == country]  # Note: now lowercase
+        with st.expander(f"Day {i+1}: Explore {country}", expanded=i<3):
+            country_locations = df_sorted[df_sorted['country'] == country]
             
-            st.write(f"**Suggested locations in {country}:**")
-            for _, location in country_locations.head(3).iterrows():
+            st.write(f"**🎯 Recommended destinations in {country}:**")
+            for j, (_, location) in enumerate(country_locations.head(4).iterrows()):
                 location_type = f" ({location['type']})" if 'type' in location else ""
-                st.write(f"• **{location['location']}**{location_type} - {location['distance (km)']} km away")
+                priority = "🔥 Must-see" if j == 0 else "⭐ Worth visiting"
+                
+                st.write(f"• **{location['location']}**{location_type}")
+                st.write(f"  {priority} - {location['distance (km)']} km from origin")
             
-            total_time = country_locations.head(3)['travel time (hrs)'].sum()
-            st.write(f"**Estimated total travel time:** {total_time:.1f} hours")
+            total_time = country_locations.head(4)['travel time (hrs)'].sum()
+            st.write(f"**⏱️ Estimated travel time:** {total_time:.1f} hours")
+            
+            if total_time > daily_budget_hours:
+                st.warning(f"⚠️ This exceeds your daily travel budget of {daily_budget_hours} hours")
+            else:
+                st.success(f"✅ Within your daily travel budget")
 
-# Footer
+# Travel tips and recommendations
+if 'locations_df' in st.session_state:
+    st.header("💡 Smart Travel Tips")
+    
+    df = st.session_state.locations_df
+    
+    # Analyze the destinations and provide tips
+    col_tip1, col_tip2 = st.columns(2)
+    
+    with col_tip1:
+        st.subheader("🎒 Packing Tips")
+        
+        # Determine climate zones
+        climates = []
+        for _, row in df.iterrows():
+            lat = row['latitude']
+            if lat > 60 or lat < -60:
+                climates.append("polar")
+            elif 23.5 <= lat <= 60 or -60 <= lat <= -23.5:
+                climates.append("temperate")
+            else:
+                climates.append("tropical")
+        
+        unique_climates = list(set(climates))
+        
+        if "polar" in unique_climates:
+            st.write("❄️ **Cold Weather Gear:** Heavy coat, warm layers, waterproof boots")
+        if "temperate" in unique_climates:
+            st.write("🌤️ **Versatile Clothing:** Layers, light jacket, comfortable walking shoes")
+        if "tropical" in unique_climates:
+            st.write("☀️ **Hot Weather Essentials:** Light clothing, sunscreen, hat, sandals")
+        
+        st.write("📱 **Tech Essentials:** Universal adapter, portable charger, offline maps")
+        st.write("💊 **Health Kit:** Basic medications, hand sanitizer, travel insurance")
+    
+    with col_tip2:
+        st.subheader("🚗 Transportation Tips")
+        
+        max_distance = df['distance (km)'].max()
+        
+        if max_distance > 5000:
+            st.write("✈️ **International Travel:** Consider flights for long distances")
+            st.write("📋 **Documentation:** Check visa requirements and passport validity")
+        elif max_distance > 1000:
+            st.write("🚂 **Regional Travel:** Mix of flights and ground transport")
+            st.write("🎫 **Booking:** Book transportation in advance for better prices")
+        else:
+            st.write("🚗 **Ground Transport:** Perfect for road trips or train journeys")
+            st.write("⛽ **Planning:** Plan fuel stops and rest breaks")
+        
+        st.write("📱 **Apps:** Download transport apps, translation apps, currency converters")
+        st.write("💳 **Payment:** Notify bank of travel, carry multiple payment methods")
+
+# Footer with enhanced information
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: #666;'>
-    <p>⚡ Made with magic and Streamlit ⚡</p>
-    <p>🌍 Now with automatic geocoding & nearby places discovery!</p>
-    <p>Remember: "It does not do to dwell on dreams and forget to live." - Dumbledore</p>
+<div style='text-align: center; color: #666; padding: 2rem;'>
+    <h3>🌍 Universal AI Travel Planner</h3>
+    <p><strong>Features:</strong></p>
+    <p>✅ Auto-Geocoding | 🤖 AI-Powered Discovery | 🗺️ Interactive Maps | 📊 Smart Analytics</p>
+    <p>✅ Nearby Places Detection | 💰 Budget Planning | 📱 Mobile-Friendly | 🌐 Worldwide Coverage</p>
+    <br>
+    <p><em>"Travel is the only thing you buy that makes you richer."</em></p>
+    <p>🌟 <strong>Happy Travels!</strong> 🌟</p>
 </div>
 """, unsafe_allow_html=True)
 
 # Enhanced Deployment instructions in sidebar
-with st.sidebar.expander("🚀 Deployment Guide"):
+with st.sidebar.expander("🚀 Deployment & Setup Guide"):
     st.markdown("""
-    **To deploy this app:**
+    ## 🚀 **Quick Deploy Options**
     
-    **1. Streamlit Cloud:**
-    - Push to GitHub
-    - Connect at streamlit.io
-    - Add secrets for API keys
-    - Deploy in 1-click
-    
-    **2. Local Setup:**
+    ### **1. Streamlit Cloud (Recommended)**
+    ```bash
+    # 1. Push to GitHub
+    # 2. Go to streamlit.io
+    # 3. Connect repository
+    # 4. Add API keys in secrets
+    # 5. Deploy in 1-click!
     ```
-    pip install -r requirements.txt
+    
+    ### **2. Local Development**
+    ```bash
+    pip install streamlit plotly pandas requests
     streamlit run streamlit_app.py
     ```
     
-    **3. Docker:**
+    ### **3. Docker Deployment**
+    ```bash
+    docker build -t travel-planner .
+    docker run -p 8501:8501 travel-planner
     ```
-    docker build -t hp-planner .
-    docker run -p 8501:8501 hp-planner
-    ```
     
-    **API Keys Needed:**
-    - **OpenAI**: Get from platform.openai.com
-    - **Gemini**: Get from ai.google.dev
-    - **Together AI**: Get from together.ai
-    - **Search**: SerpAPI or Serper
+    ---
     
-    **New Features:**
-    - **Auto-Geocoding**: Uses free Open-Meteo & OpenStreetMap APIs
-    - **Nearby Discovery**: AI + Web APIs find local attractions
-    - **No Extra API Keys**: Geocoding & nearby search are free!
+    ## 🔐 **API Keys Required**
     
-    **Choose Your Stack:**
-    - **Free Tier**: Gemini Flash + Auto-Geocoding + Web APIs
-    - **Performance**: OpenAI GPT-4o + Full Feature Set  
-    - **Open Source**: Together AI + Free Geocoding & Discovery
+    **AI Models (Choose One):**
+    - 🤖 **OpenAI**: platform.openai.com
+    - 🧠 **Google Gemini**: ai.google.dev (FREE tier!)
+    - 🔓 **Together AI**: together.ai (Open source models)
+    
+    **Free Features (No API needed):**
+    - 🗺️ Auto-Geocoding (Open-Meteo + OpenStreetMap)
+    - 🔍 Nearby Places Discovery (Overpass API)
+    - 📊 Analytics & Mapping (Plotly)
+    - 📱 Interactive Maps
+    
+    ---
+    
+    ## 🆕 **New Universal Features**
+    
+    ✅ **Any Destination Worldwide**
+    ✅ **6 Curated Travel Themes**
+    ✅ **AI-Powered Destination Discovery**
+    ✅ **Smart Budget Planning**
+    ✅ **Climate-Based Packing Tips**
+    ✅ **Feasibility Analysis**
+    ✅ **Enhanced Interactive Maps**
+    ✅ **Multi-Format Downloads**
+    
+    ---
+    
+    ## 💡 **Pro Tips**
+    
+    - **Free Setup**: Use Gemini Free + Auto-Geocoding
+    - **Best Performance**: OpenAI GPT-4o + All APIs
+    - **Open Source**: Together AI + Free Services
+    - **Mobile**: Works great on phones/tablets
+    - **Offline**: Download your itinerary as PDF/text
     """)
+
+# Requirements.txt generator
+with st.sidebar.expander("📦 Requirements.txt"):
+    requirements = """streamlit>=1.28.0
+plotly>=5.15.0
+pandas>=2.0.0
+requests>=2.31.0
+google-generativeai>=0.3.0
+openai>=1.0.0
+smolagents>=0.1.0"""
+    
+    st.code(requirements, language="text")
+    
+    st.download_button(
+        label="📥 Download requirements.txt",
+        data=requirements,
+        file_name="requirements.txt",
+        mime="text/plain"
+    )
+
+# App usage statistics (if you want to track usage)
+if 'usage_stats' not in st.session_state:
+    st.session_state.usage_stats = {
+        'sessions': 0,
+        'destinations_added': 0,
+        'ai_plans_generated': 0
+    }
+
+# Increment session counter
+if 'session_counted' not in st.session_state:
+    st.session_state.usage_stats['sessions'] += 1
+    st.session_state.session_counted = True
+
+# Show usage stats in sidebar (optional)
+with st.sidebar.expander("📈 Usage Statistics"):
+    stats = st.session_state.usage_stats
+    st.metric("Sessions", stats['sessions'])
+    st.metric("Destinations Added", stats.get('destinations_added', 0))
+    st.metric("AI Plans Generated", stats.get('ai_plans_generated', 0))
 
 if __name__ == "__main__":
     # This runs when script is executed directly
-    pass
+    st.balloons()  # Welcome celebration for new users!
