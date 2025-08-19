@@ -1,6 +1,6 @@
 # streamlit_app.py
 """
-Universal Travel Planner - Enhanced Streamlit Web App with Auto-Geocoding & Nearby Places Discovery
+Universal Travel Planner - Enhanced Streamlit Web App with Auto-Geocoding & Nearby Places Discovery + Serper API Reviews
 Deploy with: streamlit run streamlit_app.py
 """
 import streamlit as st
@@ -121,54 +121,419 @@ def geocode_location_with_fallback(location: str) -> Tuple[Optional[float], Opti
         data = response.json()
         
         if data and len(data) > 0:
-            lat = float(data[0]["lat"])
-            lon = float(data[0]["lon"])
+            lat = float(data["lat"])
+            lon = float(data["lon"])
             return lat, lon, "nominatim"
     except Exception as e:
         st.warning(f"Nominatim geocoding failed: {e}")
     
     return None, None, "failed"
 
-# ==================== NEARBY PLACES DISCOVERY ====================
+# ==================== TRAVEL DISTANCE & TIME CALCULATION ====================
 
+def haversine_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
+    """Calculate the great-circle distance between two coordinates (lat, lon) in kilometers."""
+    R = 6371  # Earth radius in km
+    
+    lat1, lon1 = coord1
+    lat2, lon2 = coord2
+    
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    
+    a = math.sin(delta_phi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(delta_lambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    return R * c
+
+def calculate_travel_distance(origin: Tuple[float, float], destination: Tuple[float, float], transport_mode: str) -> Dict:
+    """Calculate distance and approximate travel time based on transport mode."""
+    distance_km = haversine_distance(origin, destination)
+    
+    # Approximate average speeds (km/h) by transport mode
+    speed_map = {
+        "car": 70,
+        "train": 90,
+        "plane": 700,
+        "mixed": 100
+    }
+    average_speed = speed_map.get(transport_mode, 100)
+    
+    # Calculate travel time in hours with minimum 0.1 to avoid zero-time
+    travel_time_hours = max(distance_km / average_speed, 0.1)
+    
+    return {
+        "distance_km": distance_km,
+        "travel_time_hours": travel_time_hours,
+        "transport_mode": transport_mode
+    }
+
+# ==================== FETCH NEARBY PLACES USING WEB API ====================
+
+def find_nearby_places_with_api(lat: float, lon: float, radius_km: int = 50) -> List[Dict]:
+    """Find nearby places using free web APIs (OpenStreetMap Overpass API)."""
+    places = []
+    
+    try:
+        overpass_url = "http://overpass-api.de/api/interpreter"
+        
+        lat_min = lat - (radius_km / 111)  # approx degree latitude in km
+        lat_max = lat + (radius_km / 111)
+        lon_min = lon - (radius_km / (111 * math.cos(math.radians(lat))))
+        lon_max = lon + (radius_km / (111 * math.cos(math.radians(lat))))
+        
+        overpass_query = f"""
+        [out:json][timeout:25];
+        (
+          node["tourism"~"attraction|museum|monument|castle|gallery|zoo|aquarium|theme_park"]({lat_min},{lon_min},{lat_max},{lon_max});
+          node["historic"~"castle|monument|museum|ruins|archaeological_site"]({lat_min},{lon_min},{lat_max},{lon_max});
+          node["amenity"~"theatre|cinema|library|restaurant|cafe|bar"]({lat_min},{lon_min},{lat_max},{lon_max});
+          node["leisure"~"park|garden|sports_centre|marina|beach_resort"]({lat_min},{lon_min},{lat_max},{lon_max});
+          node["natural"~"beach|peak|hot_spring|waterfall"]({lat_min},{lon_min},{lat_max},{lon_max});
+        );
+        out center meta;
+        """
+        
+        response = requests.post(overpass_url, data=overpass_query, timeout=30)
+        data = response.json()
+        
+        if 'elements' in data:
+            for element in data['elements'][:20]:
+                if 'tags' in element and 'name' in element['tags']:
+                    place_lat = element.get('lat', 0)
+                    place_lon = element.get('lon', 0)
+                    name = element['tags']['name']
+                    
+                    tags = element['tags']
+                    place_type = tags.get('tourism', tags.get('historic', tags.get('amenity', tags.get('leisure', tags.get('natural', 'attraction')))))
+                    
+                    if place_lat and place_lon and name:
+                        places.append({
+                            "name": name,
+                            "lat": place_lat,
+                            "lon": place_lon,
+                            "type": place_type,
+                            "source": "OpenStreetMap"
+                        })
+    
+    except Exception as e:
+        st.warning(f"Could not fetch nearby places from web API: {e}")
+    
+    return places[:15]
+
+# ==================== SERPER API USER REVIEWS ====================
+
+def fetch_serper_reviews(location_name: str, api_key: str) -> List[Dict]:
+    """Fetch user reviews for a location from Serper API."""
+    if not api_key or not location_name:
+        return []
+    search_url = "https://google.serper.dev/search"
+    headers = {
+        "X-API-KEY": api_key,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "q": f"{location_name} reviews"
+    }
+
+    try:
+        response = requests.post(search_url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        reviews = []
+        # Try to parse reviews from knowledgeGraph if present
+        if "knowledgeGraph" in data and "reviews" in data["knowledgeGraph"]:
+            for review in data["knowledgeGraph"]["reviews"]:
+                reviews.append({
+                    "author": review.get("author"),
+                    "rating": review.get("rating"),
+                    "text": review.get("text")
+                })
+
+        # Fallback parsing from organic results if needed (optional)
+
+        return reviews[:3]  # Return top 3 reviews for UI clarity
+    except Exception as e:
+        st.warning(f"Error fetching Serper reviews for {location_name}: {e}")
+        return []
+
+# ==================== AI MODEL INITIALIZATION ====================
+
+def safe_extract_response_text(response):
+    """Safely extract text from AI response"""
+    if not response:
+        return "No response received from AI model."
+    
+    try:
+        if hasattr(response, 'content') and isinstance(response.content, str):
+            return response.content
+        elif hasattr(response, 'text') and isinstance(response.text, str):
+            return response.text
+        
+        if hasattr(response, 'candidates') and response.candidates:
+            candidate = response.candidates[0]
+            
+            if hasattr(candidate, 'finish_reason'):
+                finish_reason = candidate.finish_reason
+                if finish_reason == 1:
+                    return "AI response was cut short. Try rephrasing your request."
+                elif finish_reason == 2:
+                    return "AI response exceeded token limit. Try breaking down your request."
+                elif finish_reason == 3:
+                    return "Response blocked for safety reasons. Please rephrase your request."
+                elif finish_reason == 4:
+                    return "Response blocked due to recitation concerns. Please try a different approach."
+            
+            if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                parts = candidate.content.parts
+                if parts and len(parts) > 0:
+                    text_parts = []
+                    for part in parts:
+                        if hasattr(part, 'text') and part.text:
+                            text_parts.append(part.text)
+                    
+                    if text_parts:
+                        return '\n'.join(text_parts)
+        
+        if hasattr(response, 'content'):
+            return str(response.content)
+        elif hasattr(response, 'text'):
+            return str(response.text)
+        else:
+            return str(response)
+            
+    except Exception as e:
+        return f"Error extracting response: {str(e)}. The AI model may have returned an unexpected format."
+
+def initialize_ai_model(provider: str, api_key: str, model_name: str):
+    """Initialize AI model based on selected provider."""
+    if not api_key:
+        st.error(f"Please enter your {provider} API key!")
+        return None
+    
+    try:
+        if provider == "OpenAI":
+            import openai
+            os.environ["OPENAI_API_KEY"] = api_key
+            from smolagents import OpenAIServerModel
+            return OpenAIServerModel(model_name, max_tokens=3000)
+            
+        elif provider == "Google Gemini":
+            import google.generativeai as genai
+            os.environ["GOOGLE_API_KEY"] = api_key
+            genai.configure(api_key=api_key)
+            
+            class GeminiModel:
+                def __init__(self, model_name):
+                    self.model = genai.GenerativeModel(model_name)
+                    self.model_name = model_name
+                
+                def __call__(self, messages, **kwargs):
+                    if isinstance(messages, str):
+                        prompt = messages
+                    elif isinstance(messages, list) and len(messages) > 0:
+                        if isinstance(messages[0], dict) and 'content' in messages:
+                            prompt = messages['content']
+                        else:
+                            prompt = str(messages)
+                    else:
+                        prompt = str(messages)
+                    
+                    try:
+                        response = self.model.generate_content(prompt)
+                        
+                        class SafeResponse:
+                            def __init__(self, gemini_response):
+                                self.original_response = gemini_response
+                                self._content = None
+                                self._text = None
+                                self._extract_content()
+                            
+                            def _extract_content(self):
+                                try:
+                                    if (hasattr(self.original_response, 'candidates') and 
+                                        self.original_response.candidates and
+                                        hasattr(self.original_response.candidates, 'content') and
+                                        hasattr(self.original_response.candidates.content, 'parts') and
+                                        self.original_response.candidates.content.parts):
+                                        
+                                        parts = self.original_response.candidates.content.parts
+                                        text_parts = [part.text for part in parts if hasattr(part, 'text') and part.text]
+                                        
+                                        if text_parts:
+                                            self._content = '\n'.join(text_parts)
+                                            self._text = self._content
+                                        else:
+                                            self._handle_no_content()
+                                    else:
+                                        self._handle_no_content()
+                                except Exception as e:
+                                    self._content = f"Error extracting content: {str(e)}"
+                                    self._text = self._content
+                            
+                            def _handle_no_content(self):
+                                finish_reason = None
+                                try:
+                                    if (hasattr(self.original_response, 'candidates') and 
+                                        self.original_response.candidates):
+                                        finish_reason = self.original_response.candidates[0].finish_reason
+                                except:
+                                    pass
+                                
+                                if finish_reason == 1:
+                                    self._content = "AI stopped generating content. Please try rephrasing your request."
+                                elif finish_reason == 2:
+                                    self._content = "Response was too long. Please try a shorter request."
+                                elif finish_reason == 3:
+                                    self._content = "Response blocked for safety. Please rephrase your request."
+                                elif finish_reason == 4:
+                                    self._content = "Response blocked due to policy. Please try a different approach."
+                                else:
+                                    self._content = "No content generated. Please try rephrasing your request."
+                                
+                                self._text = self._content
+                            
+                            @property
+                            def content(self):
+                                return self._content
+                            
+                            @property
+                            def text(self):
+                                return self._text
+                        
+                        return SafeResponse(response)
+                        
+                    except Exception as e:
+                        class ErrorResponse:
+                            def __init__(self, error_msg):
+                                self.content = f"Gemini model error: {error_msg}"
+                                self.text = self.content
+                        
+                        return ErrorResponse(str(e))
+            
+            return GeminiModel(model_name)
+            
+        else:
+            os.environ["TOGETHER_API_KEY"] = api_key
+            from smolagents import InferenceClientModel
+            return InferenceClientModel(model_name, provider="together", max_tokens=3000)
+            
+    except Exception as e:
+        st.error(f"Error initializing {provider} model: {str(e)}")
+        return None
+
+# ==================== AI-POWERED LOCATION SEARCH (Example Implementation) ====================
+
+def ai_enhanced_location_search(model, query: str, trip_type: str) -> str:
+    prompt = (
+        f"Find top 15 {trip_type.lower()} travel destinations based on this query: {query}.\n"
+        "Provide names and short location descriptions."
+    )
+    response = model(prompt)
+    text = safe_extract_response_text(response)
+    return text
+
+# ==================== AI GENERATE TRAVEL PLAN (Example Placeholder) ====================
+
+def generate_ai_travel_plan(model, df: pd.DataFrame, trip_days: int, daily_budget_hours: int, budget_range: str, serper_api_key: str) -> str:
+    """
+    Generate a detailed AI travel plan with place highlights and user reviews.
+    - df: DataFrame with locations
+    - serper_api_key: key to fetch user reviews from Serper API
+    """
+    locations = df['location'].tolist()
+    countries = df['country'].tolist() if 'country' in df.columns else ["Unknown"] * len(locations)
+    
+    plan = f"Trip plan for {trip_days} days with a {budget_range} budget:\n\n"
+    
+    for day in range(1, trip_days + 1):
+        loc_index = (day - 1) % len(locations)
+        place = locations[loc_index]
+        country = countries[loc_index] if loc_index < len(countries) else "Unknown"
+        
+        # Use AI to generate highlights/places to visit inside this location
+        prompt = f"""
+        You are a travel guide. Provide a detailed list of top 3 must-visit places or activities in {place}, {country}. 
+        Include brief descriptions for each.
+        """
+        response = model(prompt)
+        details = safe_extract_response_text(response)
+        
+        # Fetch user reviews for place or top highlight (optional: can fetch for each highlight separately)
+        reviews = fetch_serper_reviews(place, serper_api_key)
+        
+        # Format reviews text
+        if reviews:
+            reviews_text = "\nUser Reviews:\n"
+            for r in reviews:
+                rating = f"⭐ {r.get('rating', 'N/A')}" if r.get('rating') else ""
+                author = f"— {r.get('author', 'Anonymous')}" if r.get('author') else ""
+                text = r.get('text', '').strip()
+                reviews_text += f"{rating} {author}\n{text}\n\n"
+        else:
+            reviews_text = "User Reviews: No reviews available.\n"
+        
+        plan += f"Day {day}: Visit {place}, {country}\n"
+        plan += f"Highlights:\n{details.strip()}\n\n"
+        plan += reviews_text
+        plan += "-------------------------------------------\n\n"
+    
+    return plan
+# ==================== AI-BASED NEARBY PLACE FINDER (Partial, can be extended) ====================
 def find_nearby_places_with_ai(model, location_name: str, lat: float, lon: float, radius_km: int = 50):
     """Use AI to find interesting places near a given location"""
     if model is None:
         return []
     
     prompt = f"""
-    Find interesting places to visit near {location_name} (coordinates: {lat:.4f}, {lon:.4f}).
-    
-    REQUIREMENTS:
-    - Find 15 diverse attractions, landmarks, or points of interest
-    - Include places within approximately {radius_km}km radius
-    - For each place provide: exact name, approximate coordinates (lat, lon), type of attraction
-    - Include mix of: historical sites, natural attractions, cultural sites, entertainment venues, restaurants, shopping areas
-    - Avoid duplicating the main location: {location_name}
-    
-    FORMAT RESPONSE AS:
-    1. Place Name | Latitude | Longitude | Type | Distance from main location
-    2. Place Name | Latitude | Longitude | Type | Distance from main location
-    ...
-    
-    Example:
-    1. Central Park | 40.7829 | -73.9654 | Natural Park | 2km
-    2. Metropolitan Museum | 40.7794 | -73.9632 | Cultural Museum | 1km
-    
-    Provide realistic coordinates and distances.
+Find interesting places to visit near {location_name} (coordinates: {lat:.4f}, {lon:.4f}).
+
+REQUIREMENTS:
+- Find 15 diverse attractions, landmarks, or points of interest
+- Include places within approximately {radius_km}km radius
+- For each place provide: exact name, approximate coordinates (lat, lon), type of attraction
+- Include mix of: historical sites, natural attractions, cultural sites, entertainment venues, restaurants, shopping areas
+- Avoid duplicating the main location: {location_name}
+
+FORMAT RESPONSE AS:
+1. Place Name | Latitude | Longitude | Type | Distance from main location
+2. Place Name | Latitude | Longitude | Type | Distance from main location
+...
     """
     
     try:
         response = model(prompt)
         content = safe_extract_response_text(response)
-        return parse_ai_nearby_places(content, location_name)
+        places = []
+        # Parse response lines
+        for line in content.split('\n'):
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 5:
+                    try:
+                        name = re.sub(r'^\d+\.\s*', '', parts[0])
+                        plat = float(parts[1])
+                        plon = float(parts)
+                        ptype = parts
+                        distance = parts
+                        places.append({
+                            "name": name,
+                            "lat": plat,
+                            "lon": plon,
+                            "type": ptype,
+                            "distance": distance,
+                            "source": "AI_discovery"
+                        })
+                    except Exception:
+                        continue
+        return places[:15]
     except Exception as e:
         st.warning(f"Could not find nearby places with AI: {e}")
         return []
-
-def parse_ai_nearby_places(ai_response: str, main_location: str):
-    """Parse AI response to extract nearby places data"""
-    places = []
     
     try:
         lines = ai_response.split('\n')
@@ -181,8 +546,8 @@ def parse_ai_nearby_places(ai_response: str, main_location: str):
                     
                     try:
                         lat = float(parts[1])
-                        lon = float(parts[2])
-                        place_type = parts[3]
+                        lon = float(parts)
+                        place_type = parts
                         
                         if name and lat != 0 and lon != 0:
                             places.append({
@@ -239,11 +604,48 @@ def find_nearby_places_with_api(lat: float, lon: float, radius_km: int = 50):
                             "type": place_type,
                             "source": "OpenStreetMap"
                         })
-        
+    
     except Exception as e:
         st.warning(f"Could not fetch nearby places from web API: {e}")
     
     return places[:15]
+
+# ========== New: Serper API User Reviews Function ==========
+
+def fetch_serper_reviews(location_name: str, api_key: str):
+    """Fetch user reviews for a location from Serper API"""
+    if not api_key or not location_name:
+        return []
+    search_url = "https://google.serper.dev/search"
+    headers = {
+        "X-API-KEY": api_key,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "q": f"{location_name} reviews"
+    }
+
+    try:
+        response = requests.post(search_url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        reviews = []
+        # Try to parse reviews from knowledgeGraph if present
+        if "knowledgeGraph" in data and "reviews" in data["knowledgeGraph"]:
+            for review in data["knowledgeGraph"]["reviews"]:
+                reviews.append({
+                    "author": review.get("author"),
+                    "rating": review.get("rating"),
+                    "text": review.get("text")
+                })
+
+        # Fallback parsing from organic results if needed (optional)
+
+        return reviews[:3]  # Return top 3 reviews for UI clarity
+    except Exception as e:
+        st.warning(f"Error fetching Serper reviews for {location_name}: {e}")
+        return []
 
 # ==================== TRAVEL EXAMPLES ====================
 
@@ -316,23 +718,26 @@ st.sidebar.header("🧳 Trip Configuration")
 
 # API Keys setup
 with st.sidebar.expander("🔐 API Keys Setup"):
-    st.info("Enter your API keys to enable full AI functionality")
-    
+    st.info("Enter your API keys to enable full AI functionality and Serper reviews")
+
     ai_provider = st.selectbox(
         "🤖 Choose AI Provider",
         ["OpenAI", "Google Gemini", "Together AI"],
         help="Select your preferred AI model provider"
     )
-    
+
     if ai_provider == "OpenAI":
         ai_key = st.text_input("OpenAI API Key", type="password", help="For GPT models")
         model_name = st.selectbox("Model", ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"])
     elif ai_provider == "Google Gemini":
         ai_key = st.text_input("Google AI API Key", type="password", help="For Gemini models")
-        model_name = st.selectbox("Model", ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"])
+        model_name = st.selectbox("Model", ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"])
     else:
         ai_key = st.text_input("Together AI API Key", type="password", help="For open-source models")
         model_name = st.selectbox("Model", ["Qwen/Qwen2.5-Coder-32B-Instruct", "meta-llama/Llama-3.1-70B-Instruct"])
+    
+    # New: Serper API key input
+    serper_api_key = st.text_input("Serper API Key", type="password", help="Required for fetching user reviews")
 
 # Trip parameters
 trip_days = st.sidebar.slider("Trip Duration (days)", 2, 14, 7)
@@ -368,7 +773,7 @@ if location_method == "🏙️ Popular Cities":
     selected_city = st.sidebar.selectbox("Select your departure city:", list(POPULAR_CITIES.keys()), index=0)
     departure_coords = POPULAR_CITIES[selected_city]
     departure_location = selected_city
-    
+
 elif location_method == "📍 Enter Location":
     departure_location = st.sidebar.text_input(
         "Enter any location name:", 
@@ -493,10 +898,10 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
                     if isinstance(messages, str):
                         prompt = messages
                     elif isinstance(messages, list) and len(messages) > 0:
-                        if isinstance(messages[0], dict) and 'content' in messages[0]:
-                            prompt = messages[0]['content']
+                        if isinstance(messages[0], dict) and 'content' in messages:
+                            prompt = messages['content']
                         else:
-                            prompt = str(messages[0])
+                            prompt = str(messages)
                     else:
                         prompt = str(messages)
                     
@@ -515,10 +920,10 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
                                     if (hasattr(self.original_response, 'candidates') and 
                                         self.original_response.candidates and
                                         hasattr(self.original_response.candidates[0], 'content') and
-                                        hasattr(self.original_response.candidates[0].content, 'parts') and
-                                        self.original_response.candidates[0].content.parts):
+                                        hasattr(self.original_response.candidates.content, 'parts') and
+                                        self.original_response.candidates.content.parts):
                                         
-                                        parts = self.original_response.candidates[0].content.parts
+                                        parts = self.original_response.candidates.content.parts
                                         text_parts = [part.text for part in parts if hasattr(part, 'text') and part.text]
                                         
                                         if text_parts:
@@ -582,122 +987,6 @@ def initialize_ai_model(provider: str, api_key: str, model_name: str):
     except Exception as e:
         st.error(f"Error initializing {provider} model: {str(e)}")
         return None
-
-def generate_ai_travel_plan(model, locations_df: pd.DataFrame, trip_days: int, daily_hours: int, budget: str):
-    """Generate intelligent travel recommendations using AI"""
-    if model is None:
-        return "Please configure your AI model first."
-    
-    location_summary = locations_df.to_string(index=False)
-    
-    prompt = f"""
-    As an expert travel planner, create an optimal {trip_days}-day itinerary for these destinations:
-    
-    LOCATIONS DATA:
-    {location_summary}
-    
-    TRIP PARAMETERS:
-    - Duration: {trip_days} days
-    - Daily travel budget: {daily_hours} hours
-    - Budget level: {budget}
-    - Minimize travel time between locations
-    - Group nearby locations together
-    
-    PROVIDE A COMPREHENSIVE PLAN INCLUDING:
-    1. Day-by-day detailed itinerary with specific locations
-    2. Travel time estimates and best routes between locations
-    3. Recommended airports/transportation hubs
-    4. Budget-appropriate accommodation suggestions
-    5. Must-see vs optional attractions with priority rankings
-    6. Local transportation tips
-    7. Best times to visit each location
-    8. Cultural tips and local customs to know
-    9. Estimated daily costs for {budget} budget
-    10. Emergency contacts and travel safety tips
-    
-    Format as a clear, actionable travel plan that's easy to follow.
-    """
-    
-    try:
-        response = None
-        
-        try:
-            response = model(prompt)
-        except (AttributeError, TypeError) as e:
-            if "'str' object has no attribute 'role'" in str(e):
-                messages = [{"role": "user", "content": prompt}]
-                response = model(messages)
-            else:
-                raise e
-        
-        return safe_extract_response_text(response)
-            
-    except Exception as e:
-        return f"Error generating AI plan: {str(e)}\n\nPlease check your AI model configuration."
-
-def ai_enhanced_location_search(model, query: str, location_type: str):
-    """Use AI to find and analyze travel destinations"""
-    if model is None:
-        return "Please configure your AI model first."
-        
-    prompt = f"""
-    Find comprehensive information about travel destinations worldwide based on this query: "{query}"
-    
-    Focus on: {location_type} destinations
-    
-    For each destination provide:
-    1. Exact name and key highlights
-    2. Country and nearest major city/airport
-    3. Main attractions and activities
-    4. Best time to visit
-    5. Approximate coordinates (latitude, longitude)
-    6. Travel difficulty level and accessibility
-    7. Budget range recommendations
-    
-    Provide at least 12-15 diverse destinations across different countries and continents.
-    Include a mix of popular and hidden gem locations.
-    
-    Format as structured data that can be easily parsed.
-    """
-    
-    try:
-        response = None
-        
-        try:
-            response = model(prompt)
-        except (AttributeError, TypeError) as e:
-            if "'str' object has no attribute 'role'" in str(e):
-                messages = [{"role": "user", "content": prompt}]
-                response = model(messages)
-            else:
-                raise e
-        
-        return safe_extract_response_text(response)
-            
-    except Exception as e:
-        return f"Error in AI search: {str(e)}"
-
-def calculate_travel_distance(coord1: Tuple[float, float], coord2: Tuple[float, float], transport_mode: str = "mixed") -> Dict:
-    """Calculate distance and travel time between two coordinates"""
-    def haversine_distance(lat1, lon1, lat2, lon2):
-        R = 6371
-        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-        dlat = lat2 - lat1
-        dlon = lon2 - lon1
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
-        c = 2 * math.asin(math.sqrt(a))
-        return R * c
-    
-    distance = haversine_distance(coord1[0], coord1[1], coord2[0], coord2[1])
-    
-    speeds = {"car": 70, "train": 100, "plane": 500, "mixed": 85}
-    travel_time = distance / speeds.get(transport_mode, 85)
-    
-    return {
-        "distance_km": round(distance, 2),
-        "travel_time_hours": round(travel_time, 2),
-        "transport_mode": transport_mode
-    }
 
 # ==================== MAIN APPLICATION ====================
 
@@ -771,11 +1060,11 @@ with col1:
         ["🎯 Use Travel Themes Above", "🤖 AI-Powered Destination Search", "🌐 Web Search + AI Analysis", "📍 Custom Destinations + Discovery"],
         help="Choose your preferred method to find amazing destinations"
     )
-
-    # CUSTOM DESTINATIONS WITH NEARBY DISCOVERY
+    
+    # CUSTOM DESTINATIONS WITH NEARBY DISCOVERY AND SERPER REVIEWS
     if search_option == "📍 Custom Destinations + Discovery":
         st.subheader("📍 Create Your Custom Travel Experience")
-        st.info("💡 **New Feature**: Add any destination and we'll discover amazing nearby places to visit!")
+        st.info("💡 **New Feature**: Add any destination and we'll discover amazing nearby places to visit with user reviews!")
         
         # Initialize custom locations in session state
         if 'custom_locations_input' not in st.session_state:
@@ -811,7 +1100,7 @@ with col1:
                         # Add main destination
                         main_location = {
                             "name": custom_name,
-                            "country": custom_country or custom_name.split(', ')[-1] if ', ' in custom_name else "Unknown",
+                            "country": custom_country or (custom_name.split(', ')[-1] if ', ' in custom_name else "Unknown"),
                             "lat": lat,
                             "lon": lon,
                             "description": custom_description,
@@ -840,7 +1129,7 @@ with col1:
                                 if web_places:
                                     st.success(f"🌐 Found {len(web_places)} places from web databases!")
                         
-                        # Remove duplicates and add nearby places
+                        # Remove duplicates
                         seen_names = {main_location["name"].lower()}
                         unique_nearby = []
                         
@@ -852,12 +1141,16 @@ with col1:
                                 place["type"] = f"Nearby {place.get('type', 'Attraction')}"
                                 unique_nearby.append(place)
                         
-                        # Add up to 15 nearby places
+                        # Fetch Serper reviews for each nearby place (if API key entered)
+                        for place in unique_nearby:
+                            place["reviews"] = fetch_serper_reviews(place["name"], serper_api_key)
+
+                        # Add up to 15 nearby places with reviews
                         st.session_state.custom_locations_input.extend(unique_nearby[:15])
                         
                         total_found = len(st.session_state.custom_locations_input)
-                        st.success(f"✅ Found {custom_name} + {total_found-1} amazing nearby places!")
-                        st.rerun()
+                        st.success(f"✅ Found {custom_name} + {total_found-1} amazing nearby places with reviews!")
+                        st.experimental_rerun()
                     else:
                         st.error(f"❌ Could not find coordinates for '{custom_name}'. Please try a more specific location name.")
         
@@ -883,11 +1176,10 @@ with col1:
                         st.session_state.custom_locations_input = []
                         st.rerun()
             
-            # Display nearby places
+            # Display nearby places with reviews
             if nearby_locations:
                 st.markdown(f"**🌟 Nearby Places to Visit ({len(nearby_locations)}):**")
                 
-                # Show in a more compact format
                 for i in range(0, len(nearby_locations), 3):
                     cols = st.columns(3)
                     for j, col in enumerate(cols):
@@ -896,6 +1188,15 @@ with col1:
                             with col:
                                 st.write(f"**{loc['name']}**")
                                 st.caption(f"{loc.get('type', 'Attraction')} | {loc.get('source', 'unknown')}")
+                                # Show up to 3 user reviews (if available)
+                                if "reviews" in loc and loc["reviews"]:
+                                    with st.expander("User Reviews"):
+                                        for r in loc["reviews"]:
+                                            rating_str = f"⭐ {r['rating']}" if r.get("rating") else ""
+                                            author_str = f"— {r['author']}" if r.get("author") else ""
+                                            st.write(f"{rating_str} {author_str}")
+                                            st.write(r['text'])
+                                            st.markdown("---")
                                 if st.button("❌", key=f"remove_nearby_{i+j}", help="Remove this place"):
                                     # Find index in main list and remove
                                     for idx, main_loc in enumerate(st.session_state.custom_locations_input):
