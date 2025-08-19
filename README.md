@@ -1,48 +1,75 @@
-# ⚡ Agentic AI Travel Planner
-An intelligent travel planning application that helps you discover Harry Potter filming locations worldwide and find interesting nearby places to visit. Features automatic geocoding, AI-powered trip planning, and interactive maps.
+# Universal AI Travel Planner
+
+🌍 An advanced AI-powered travel planner web application built with Streamlit. Discover amazing destinations worldwide, auto-geocode any location, find nearby attractions, get user reviews via Serper API, and generate detailed AI-crafted travel itineraries with smart analytics and interactive maps.
+
+---
+
+## Features
+
+- **Auto Geocoding:** Converts location names to geographic coordinates automatically using free services.
+- **Nearby Places Discovery:** Finds diverse attractions near your destinations with AI and OpenStreetMap APIs.
+- **User Reviews Integration:** Fetches real user reviews for places from the Serper API to enhance trip insights.
+- **AI-Powered Itineraries:** Generates detailed day-by-day travel plans including highlights and user reviews.
+- **Interactive Maps:** Visualize your travel destinations on an interactive map with custom styling.
+- **Budget & Feasibility Analysis:** Includes trip feasibility and budget estimations based on your parameters.
+- **Multiple Travel Themes:** Explore preset travel themes like Historical Europe, Tropical Paradise, Adventure Mountains, etc.
+- **Multi-Provider AI Support:** Use OpenAI, Google Gemini, or Together AI models to power AI features.
+- **Download Options:** Export your destinations and itineraries as CSV or text files.
+
+---
 
 
-Quick Search: Pre-loaded Harry Potter filming locations
+Open the web browser at `http://localhost:8501`.
 
-AI-Powered Search: Use AI models to find and analyze locations
+---
 
-Custom Locations: Add your own destinations with automatic coordinate detection
+## Usage
 
-Nearby Places Discovery: Automatically find 10+ interesting places near your custom locations
+- Select your departure city or enter a custom location.
+- Choose your travel theme or create a custom destination list.
+- Discover nearby attractions using AI or web APIs.
+- Generate a detailed, AI-powered travel itinerary with highlights and real user reviews.
+- Visualize your trip on the interactive map.
+- Download your itinerary and destination data for offline use.
 
-## 🌍 Automatic Geocoding
-No API Keys Required: Uses free Open-Meteo and OpenStreetMap APIs
+---
 
-Smart Fallbacks: Multiple geocoding services for reliability
+## Configuration
 
-Global Coverage: Works worldwide for any location name
+- **Trip Duration:** Set how many days your trip will last.
+- **Daily Travel Budget:** Control how many hours per day you want to spend traveling.
+- **Budget Range:** Choose between Budget, Mid-range, Luxury, or Ultra-luxury tiers.
+- **Transport Mode:** Specify your preferred transport (car, train, plane, or mixed).
+- **AI Provider:** Select between OpenAI, Google Gemini, or Together AI for AI-powered recommendations.
+- **Serper API Key:** Required to enable fetching user reviews for destinations.
 
-## 🤖 AI Integration
-Multiple AI Providers: OpenAI GPT, Google Gemini, Together AI
+---
 
-Intelligent Trip Planning: Generate optimized itineraries
+## Project Structure
 
-Smart Location Analysis: AI-curated nearby attractions
+- `streamlit_app.py` — Main Streamlit application and UI.
+- Helper functions for geocoding, nearby places discovery, AI integration, and Serper API reviews.
+- Requirements file with all dependencies listed.
 
-Robust Error Handling: Safe response extraction and fallbacks
+---
 
-## 🗺️ Interactive Visualizations
-Enhanced Maps: Plotly-powered interactive maps with custom markers
+## Notes & Tips
 
-Location Types: Visual distinction between main destinations and nearby places
+- Serper API key is optional but highly recommended to get authentic user reviews.
+- Geocoding uses free APIs with rate limits, so heavy usage might encounter delays.
+- AI-generated itineraries depend on the selected AI model and prompt design.
+- Always validate travel plans and bookings independently.
 
-Origin Tracking: Shows your departure point and travel distances
+---
 
-Fallback Options: Simple maps if interactive features fail
+## Getting Started
 
-## 📊 Trip Analytics
-Distance Calculations: Haversine formula for accurate distances
+### Prerequisites
 
-Travel Time Estimates: Based on transport mode (car, train, mixed)
+- Python 3.8 or higher
+- Streamlit
+- Required Python packages (see `requirements.txt`)
 
-Feasibility Analysis: Smart recommendations based on trip duration
-
-Budget Planning: Daily travel hour budgeting
 
 ## 🚀 Quick Start
 ```bash
@@ -233,45 +260,28 @@ pip install -r requirements.txt
 ```
 streamlit run streamlit_app.py --server.runOnSave true
 ```
-Code Structure
-Modular Design: Separate functions for geocoding, AI, visualization
-Error Handling: Comprehensive try-catch blocks and fallbacks
-State Management: Proper Streamlit session state usage
-Column Cleaning: Consistent DataFrame column naming
 
-🤝 Contributing
-Fork the repository
-Create a feature branch (git checkout -b feature/amazing-feature)
-Commit your changes (git commit -m 'Add amazing feature')
-Push to the branch (git push origin feature/amazing-feature)
-Open a Pull Request
+## License
 
-📝 License
-```This project is licensed under the MIT License - see the LICENSE file for details.
-```
-## 🙏 Acknowledgments
-Harry Potter: Warner Bros. and J.K. Rowling for the magical universe
-Streamlit: For the amazing web app framework
-OpenStreetMap: For free geocoding and mapping data
-Open-Meteo: For reliable geocoding services
-AI Providers: OpenAI, Google, and Together AI for language models
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-🐛 Known Issues & Solutions
-Common Errors
-KeyError: 'country': Fixed with automatic column cleaning
-Gemini API errors: Handled with safe response extraction
-Geocoding failures: Multiple fallback APIs implemented
+---
 
-Performance Tips
-Use custom locations mode for faster processing
-Enable AI features only when needed
-Download results as CSV for offline analysis
+## Acknowledgments
 
-📞 Support
-Issues: GitHub Issues
-Discussions: GitHub Discussions
-Documentation: See inline code comments and docstrings
+- Open-Meteo and Nominatim OpenStreetMap for free geocoding APIs.
+- Serper API for real-time user reviews integration.
+- Plotly for creating beautiful interactive maps.
+- Streamlit for an easy-to-use web framework.
 
-"It does not do to dwell on dreams and forget to live." - Albus Dumbledore
+---
+
+## Contact
+
+For questions, issues, or contributions, please open an issue or submit a pull request.
+
+Happy travels! ✈️🗺️🌟
+
 
 ⚡ Made with magic and Streamlit ⚡
+
