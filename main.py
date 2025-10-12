@@ -206,10 +206,19 @@ def create_trip_plan(destination_info, days, ai_model):
     if not ai_model:
         return {"error": "No AI model configured"}
     
+    # Extract attraction names from the attractions list
+    attractions_list = destination_info.get('attractions', [])
+    if attractions_list and isinstance(attractions_list[0], dict):
+        # If attractions is a list of dicts, extract names
+        attraction_names = [a.get('name', '') for a in attractions_list[:3]]
+    else:
+        # If it's already a list of strings
+        attraction_names = attractions_list[:3]
+    
     prompt = f"""Create a simple {days}-day travel plan for {destination_info['name']}, {destination_info['country']}.
 
 Weather: {destination_info.get('temperature', 'N/A')}°C
-Top attractions: {', '.join(destination_info.get('attractions', [])[:3])}
+Top attractions: {', '.join(attraction_names) if attraction_names else 'To be discovered'}
 
 Format: Day 1, Day 2, etc. with activities for each day."""
     
