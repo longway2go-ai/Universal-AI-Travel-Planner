@@ -253,10 +253,10 @@ with st.sidebar.expander("🔑 API Keys", expanded=True):
     
     if ai_provider == "Google Gemini":
         ai_key = st.text_input("Gemini API Key", type="password", help="Get free key at ai.google.dev")
-        model = st.selectbox("Model", ["gemini-2.0-flash-exp", "gemini-1.5-flash"])
+        model = st.selectbox("Model", ["gemini-2.5-flash", "gemini-2.5-pro"])
     else:
         ai_key = st.text_input("OpenAI API Key", type="password")
-        model = st.selectbox("Model", ["gpt-4o-mini", "gpt-3.5-turbo"])
+        model = st.selectbox("Model", ["gpt-4o-mini", "gpt-3.5-turbo","gpt-4o"])
     
     serper_key = st.text_input("Serper API Key (optional)", type="password", help="For web search")
 
