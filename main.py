@@ -438,8 +438,10 @@ if st.button("🚀 Create Trip Plan", type="primary"):
                                 stars = "⭐" * int(rating)
                                 st.metric("Rating", f"{rating}/5")
                                 st.caption(f"{stars}")
-                                if reviews > 0:
+                                if isinstance(reviews, (int, float)) and reviews > 0:
                                     st.caption(f"{reviews:,} reviews")
+                                elif reviews == "N/A":
+                                    st.caption("Reviews: N/A")
                             else:
                                 st.metric("Rating", "N/A")
                     
