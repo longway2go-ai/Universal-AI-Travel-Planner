@@ -1,287 +1,555 @@
-# Universal AI Travel Planner
+# 🤖 Universal AI Travel Planner
 
-🌍 An advanced AI-powered travel planner web application built with Streamlit. Discover amazing destinations worldwide, auto-geocode any location, find nearby attractions, get user reviews via Serper API, and generate detailed AI-crafted travel itineraries with smart analytics and interactive maps.
+![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
----
+> **An intelligent multi-agent system that plans your perfect trip using real-time data, AI, and smart coordination**
 
-## Features
-
-- **Auto Geocoding:** Converts location names to geographic coordinates automatically using free services.
-- **Nearby Places Discovery:** Finds diverse attractions near your destinations with AI and OpenStreetMap APIs.
-- **User Reviews Integration:** Fetches real user reviews for places from the Serper API to enhance trip insights.
-- **AI-Powered Itineraries:** Generates detailed day-by-day travel plans including highlights and user reviews.
-- **Interactive Maps:** Visualize your travel destinations on an interactive map with custom styling.
-- **Budget & Feasibility Analysis:** Includes trip feasibility and budget estimations based on your parameters.
-- **Multiple Travel Themes:** Explore preset travel themes like Historical Europe, Tropical Paradise, Adventure Mountains, etc.
-- **Multi-Provider AI Support:** Use OpenAI, Google Gemini, or Together AI models to power AI features.
-- **Download Options:** Export your destinations and itineraries as CSV or text files.
+Transform any destination into a comprehensive travel plan with weather data, top-rated attractions, reviews, and a personalized day-by-day itinerary—all in seconds!
 
 ---
 
+## 🌟 Features
 
-Open the web browser at `http://localhost:8501`.
-
----
-
-## Usage
-
-- Select your departure city or enter a custom location.
-- Choose your travel theme or create a custom destination list.
-- Discover nearby attractions using AI or web APIs.
-- Generate a detailed, AI-powered travel itinerary with highlights and real user reviews.
-- Visualize your trip on the interactive map.
-- Download your itinerary and destination data for offline use.
-
----
-
-## Configuration
-
-- **Trip Duration:** Set how many days your trip will last.
-- **Daily Travel Budget:** Control how many hours per day you want to spend traveling.
-- **Budget Range:** Choose between Budget, Mid-range, Luxury, or Ultra-luxury tiers.
-- **Transport Mode:** Specify your preferred transport (car, train, plane, or mixed).
-- **AI Provider:** Select between OpenAI, Google Gemini, or Together AI for AI-powered recommendations.
-- **Serper API Key:** Required to enable fetching user reviews for destinations.
+- **🌍 Universal Location Support** - Plan trips to any city or country worldwide
+- **⛅ Real-Time Weather** - Current weather conditions using Open-Meteo API
+- **🏛️ Smart Attractions** - Discover top tourist spots with ratings and reviews
+- **⭐ Google Ratings Integration** - Real ratings and review counts for every attraction
+- **📝 Destination Reviews** - Overall ratings and recent visitor feedback
+- **🤖 AI-Powered Itineraries** - Personalized day-by-day plans using Gemini or OpenAI
+- **📊 Rating Analytics** - Average ratings across all suggested attractions
+- **📥 Downloadable Plans** - Export your itinerary as a text file
+- **🆓 Free APIs** - Core functionality works with 100% free APIs
+- **👨‍💻 Beginner-Friendly** - Simple function-based code, easy to understand
 
 ---
 
-## Project Structure
+## 🎯 What Makes This Special?
 
-- `streamlit_app.py` — Main Streamlit application and UI.
-- Helper functions for geocoding, nearby places discovery, AI integration, and Serper API reviews.
-- Requirements file with all dependencies listed.
+### **Multi-Agent Architecture**
+This isn't just another travel app—it's an **agentic system** where specialized functions work together:
+
+```
+📍 Location Agent → ⛅ Weather Agent → 🏛️ Attractions Agent → 
+⭐ Ratings Agent → ⭐ Reviews Agent → 🤖 AI Planner Agent
+```
+
+Each agent does ONE job perfectly, and the orchestrator coordinates them all!
+
+### **Real-Time Data**
+Unlike traditional systems that use static databases, this pulls **live data** from multiple sources:
+- Current weather conditions
+- Up-to-date attraction information
+- Latest ratings and reviews
+- Dynamic AI-generated itineraries
 
 ---
-
-## Notes & Tips
-
-- Serper API key is optional but highly recommended to get authentic user reviews.
-- Geocoding uses free APIs with rate limits, so heavy usage might encounter delays.
-- AI-generated itineraries depend on the selected AI model and prompt design.
-- Always validate travel plans and bookings independently.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.8 or higher
-- Streamlit
-- Required Python packages (see `requirements.txt`)
-
 
 ## 🚀 Quick Start
+
+### **Prerequisites**
+- Python 3.8 or higher
+- pip package manager
+
+### **Installation**
+
+1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/harry-potter-travel-planner.git
-cd harry-potter-travel-planner
-Install dependencies
+git clone https://github.com/yourusername/universal-ai-travel-planner.git
+cd universal-ai-travel-planner
 ```
-```
-bash
+
+2. **Install dependencies**
+```bash
 pip install -r requirements.txt
-Run the application
 ```
-`
 
-📦 Dependencies
-```text
-# Core web framework
-streamlit>=1.48.0
-
-# Data manipulation and analysis
-pandas>=2.0.0
-numpy>=1.24.0
-
-# Visualization
-plotly>=5.15.0
-
-# AI/ML libraries
-openai>=1.0.0
-google-generativeai>=0.8.0
-smolagents>=1.21.1
-
-# HTTP requests and API calls
-requests>=2.31.0
-httpx>=0.28.0
-
-# Additional utilities
-python-dateutil>=2.8.2
-google-search-results>=2.4.2
+3. **Run the application**
+```bash
+streamlit run main.py
 ```
-## 🔧 Configuration
 
-AI Models (Optional)
-To enable AI-powered features, add your API keys in the sidebar:
+4. **Open your browser**
+The app will automatically open at `http://localhost:8501`
 
-OpenAI: Get from platform.openai.com
-Google Gemini: Get from ai.google.dev
-Together AI: Get from together.ai
+---
 
-Search APIs (Optional)
-For enhanced web search capabilities:
-SerpAPI: Get from serpapi.com
-Serper: Get from serper.dev
+## 🔑 API Keys Setup
 
-## 💡 Usage
-1. Set Your Origin
-Choose your departure location using one of three methods:
-Select from 15+ popular cities
-Enter any location name (auto-geocoded)
-Input exact coordinates
+### **Required: AI Provider (Free)**
 
-2. Choose Discovery Method
-🔍 Quick Search: Use pre-loaded Harry Potter locations
-🤖 AI-Powered: Let AI find and analyze locations
-📍 Custom Locations: Add your own destinations + discover nearby places
+Choose one:
 
-3. Plan Your Trip
-Configure trip duration and daily travel budget
-Generate AI-powered itineraries
-View interactive maps and analytics
-Download location data as CSV
+#### **Option 1: Google Gemini (Recommended - FREE)**
+1. Go to [Google AI Studio](https://ai.google.dev)
+2. Click "Get API Key"
+3. Create a new API key
+4. Copy and paste into the app sidebar
 
-4. Explore Nearby Places
-When using custom locations:
-Automatically discovers 10+ nearby attractions
-Uses both AI and web APIs for comprehensive results
-Categorizes places by type (historical, cultural, natural, etc.)
+#### **Option 2: OpenAI**
+1. Go to [OpenAI Platform](https://platform.openai.com)
+2. Create an account
+3. Navigate to API Keys
+4. Create a new key
+5. Copy and paste into the app sidebar
+
+### **Optional: Serper API (For Ratings)**
+
+Get real Google ratings for attractions:
+
+1. Go to [Serper.dev](https://serper.dev)
+2. Sign up (free tier: 2,500 searches/month)
+3. Copy your API key
+4. Paste into the app sidebar
+
+**Note:** App works without Serper, but ratings will show as "N/A"
+
+---
+
+## 📖 How to Use
+
+### **Step 1: Configure**
+- Select your AI provider (Gemini or OpenAI)
+- Enter your API key
+- Optionally add Serper key for ratings
+- Choose trip duration (3-14 days)
+
+### **Step 2: Plan**
+- Enter your destination (e.g., "Paris", "Tokyo", "New York")
+- Click "🚀 Create Trip Plan"
+- Watch the agents work their magic!
+
+### **Step 3: Explore**
+- View location and weather information
+- Browse top-rated attractions
+- Read destination reviews
+- Get your personalized itinerary
+- Download your plan
+
+---
 
 ## 🏗️ Architecture
-```text
-harry-potter-travel-planner/
-├── streamlit_app.py          # Main application
-├── requirements.txt          # Dependencies
-├── README.md                # This file
-└── .gitignore              # Git ignore rules
+
+### **System Design**
+
 ```
-Key Components
-Geocoding Engine: Free APIs (Open-Meteo + OpenStreetMap)
-AI Integration: Universal compatibility layer for multiple providers
-Nearby Discovery: Combines AI curation with OpenStreetMap data
-Trip Calculator: Haversine distance + travel time estimation
-Visualization Engine: Plotly maps with fallback options
-
-## 🌟 Advanced Features
-Custom Location Discovery
-python
-### Add a location and automatically find nearby places
-location = "Edinburgh Castle"
-nearby_places = find_nearby_places_with_ai(model, location, lat, lon, radius_km=25)
-AI-Powered Itinerary Generation
-python
-### Generate optimized travel plans
-itinerary = generate_ai_travel_plan(model, locations_df, trip_days=5, daily_hours=6)
-Smart Error Handling
-Graceful API fallbacks
-
-Safe response extraction for all AI models
-
-Consistent column naming to prevent KeyErrors
-
-## 🚀 Deployment
-Streamlit Cloud (Recommended)
-Push code to GitHub
-Connect repository at streamlit.io
-Add API keys in Streamlit secrets
-Deploy with one click
-Local Docker
-bash
-# Build image
-docker build -t hp-planner .
-
-# Run container
-docker run -p 8501:8501 hp-planner
-Environment Variables
-bash
-# Optional AI API Keys
-OPENAI_API_KEY=your_openai_key
-GOOGLE_API_KEY=your_gemini_key
-TOGETHER_API_KEY=your_together_key
-
-# Optional Search API Keys
-SERPAPI_KEY=your_serpapi_key
-SERPER_KEY=your_serper_key
-🎯 Use Cases
-🎬 Harry Potter Fans
-Discover all filming locations worldwide
-Plan themed travel itineraries
-Find nearby magical experiences
-
-🌍 General Travel Planning
-🎯 Use Cases
-🎬 Harry Potter Fans
-Discover all filming locations worldwide
-Plan themed travel itineraries
-Find nearby magical experiences
-
-🌍 General Travel Planning
-Add custom destinations anywhere in the world
-Discover hidden gems near your locations
-Generate optimized travel routes
-
-🏢 Travel Agencies
-Create themed travel packages
-Automatic itinerary generation
-Interactive client presentations
-
-📚 Educational Projects
-Geography and mapping exercises
-AI integration demonstrations
-Data visualization examples
-
-🔄 API Integrations
-Free Services (No Keys Required)
-Open-Meteo Geocoding: Location coordinate lookup
-OpenStreetMap Nominatim: Alternative geocoding
-Overpass API: Nearby attractions discovery
-
-AI Services (Optional)
-OpenAI GPT: Advanced language understanding
-Google Gemini: Multimodal AI capabilities
-Together AI: Open-source model hosting
-Search Services (Optional)
-SerpAPI: Web search results
-
-Serper: Alternative search API
-
-🛠️ Development
-Local Development Setup
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-# Install dependencies
-```
-pip install -r requirements.txt
-```
-# Run in development mode
-```
-streamlit run streamlit_app.py --server.runOnSave true
+User Input
+    ↓
+🎯 Orchestrator (Coordinator)
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                                                               │
+│  📍 Location Agent      ⛅ Weather Agent                     │
+│       ↓                      ↓                               │
+│  Get Coordinates        Get Climate Data                     │
+│                                                               │
+│  🏛️ Attractions Agent   ⭐ Ratings Agent                    │
+│       ↓                      ↓                               │
+│  Find Places           Get Reviews & Stars                   │
+│                                                               │
+│  ⭐ Reviews Agent       🤖 AI Planner Agent                  │
+│       ↓                      ↓                               │
+│  Destination Feedback   Generate Itinerary                   │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+Combined Results → User Interface
 ```
 
-## License
+### **Function Flow**
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+```python
+orchestrate_trip_planning()
+    ↓
+find_location(destination)          # Geocoding API
+    ↓
+get_weather(lat, lon)               # Open-Meteo API
+    ↓
+find_attractions(lat, lon)          # OpenStreetMap API
+    ↓
+get_place_rating(place, city)       # Serper API (optional)
+    ↓
+get_destination_reviews(place)      # Serper API (optional)
+    ↓
+create_trip_plan(data, days)        # AI Model (Gemini/GPT)
+```
 
 ---
 
-## Acknowledgments
+## 🛠️ Technology Stack
 
-- Open-Meteo and Nominatim OpenStreetMap for free geocoding APIs.
-- Serper API for real-time user reviews integration.
-- Plotly for creating beautiful interactive maps.
-- Streamlit for an easy-to-use web framework.
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Framework** | Streamlit | Web interface |
+| **Language** | Python 3.8+ | Core logic |
+| **Location** | Open-Meteo Geocoding | Free coordinates lookup |
+| **Weather** | Open-Meteo API | Free weather data |
+| **Attractions** | OpenStreetMap Overpass | Free POI data |
+| **Ratings** | Serper API | Google search results |
+| **AI Models** | Gemini / OpenAI | Itinerary generation |
+| **HTTP Client** | Requests | API calls |
 
 ---
 
-## Contact
+## 📁 Project Structure
 
-For questions, issues, or contributions, please open an issue or submit a pull request.
+```
+universal-ai-travel-planner/
+│
+├── main.py                 # Main application file
+├── requirements.txt        # Python dependencies
+├── README.md              # This file
+├── LICENSE                # MIT License
+│
+└── docs/
+    ├── interview_questions.md    # 100 interview Q&A
+    └── agentic_vs_rag.md        # Architecture explanation
+```
 
-Happy travels! ✈️🗺️🌟
+---
 
+## 🔧 Configuration
 
-⚡ Made with magic and Streamlit ⚡
+### **Supported AI Models**
 
+**Google Gemini:**
+- `gemini-2.5-flash` (Fast, efficient - Recommended)
+- `gemini-2.5-pro` (More powerful)
+
+**OpenAI:**
+- `gpt-4o-mini` (Cost-effective)
+- `gpt-3.5-turbo` (Fast)
+- `gpt-4o` (Most capable)
+
+### **Customization**
+
+Edit these parameters in `main.py`:
+
+```python
+# Number of attractions to fetch
+[:8]  # Line 158 - Change to get more/fewer attractions
+
+# API timeouts
+timeout=10  # Adjust for slower connections
+
+# Temperature range for location search
+({lat-0.1},{lon-0.1},{lat+0.1},{lon+0.1})  # Adjust search radius
+```
+
+---
+
+## 📊 Example Output
+
+**Input:** "Paris"
+
+**Output:**
+```
+📍 Paris, France
+   Latitude: 48.8566°
+   Longitude: 2.3522°
+
+⛅ Current Weather
+   Temperature: 15°C
+   Wind Speed: 12 km/h
+
+🏛️ Top-Rated Attractions
+   1. Eiffel Tower ⭐ 4.6/5 (156,789 reviews)
+   2. Louvre Museum ⭐ 4.7/5 (234,567 reviews)
+   3. Arc de Triomphe ⭐ 4.5/5 (98,234 reviews)
+   ...
+
+⭐ Paris Reviews
+   Overall Rating: 4.8/5 ⭐
+   Total Reviews: 1,234,567
+
+📅 Your 7-Day Itinerary
+   Day 1: Arrival and Eiffel Tower
+   - Morning: Check into hotel, rest
+   - Afternoon: Visit Eiffel Tower (4.6★)
+   - Evening: Seine River cruise
+   ...
+```
+
+---
+
+## 🧪 Testing
+
+### **Manual Testing**
+
+Try these destinations:
+- ✅ Major cities: "Paris", "Tokyo", "New York"
+- ✅ Small towns: "Bruges", "Kyoto", "Santorini"
+- ✅ Countries: "Iceland", "Switzerland"
+- ✅ Non-English: "東京", "巴黎"
+
+### **Edge Cases**
+- ❌ Invalid locations: "Atlantis", "Xyz123"
+- ⚠️ Ambiguous names: "Paris, Texas" vs "Paris, France"
+- 🌐 Unicode characters: "São Paulo", "Zürich"
+
+---
+
+## 🐛 Troubleshooting
+
+### **Common Issues**
+
+**Problem:** "Location not found"
+- **Solution:** Try with country name: "Paris, France"
+
+**Problem:** "AI setup error"
+- **Solution:** Verify API key is correct and has no extra spaces
+
+**Problem:** "Timeout error"
+- **Solution:** Check internet connection, try again
+
+**Problem:** "No ratings showing (N/A)"
+- **Solution:** Add Serper API key in sidebar
+
+**Problem:** Slow performance
+- **Solution:** Normal! Fetching ratings for 8 attractions takes ~15-20 seconds
+
+---
+
+## 📚 Learning Resources
+
+### **Understanding the Code**
+
+Each function is documented with:
+- **Purpose**: What it does
+- **Parameters**: What it needs
+- **Returns**: What it gives back
+- **Error handling**: How it handles failures
+
+### **Suggested Learning Path**
+
+1. **Start here:** Read `find_location()` - simplest function
+2. **Next:** Study `get_weather()` - similar pattern
+3. **Then:** Explore `find_attractions()` - more complex
+4. **Advanced:** Analyze `orchestrate_trip_planning()` - coordinates everything
+5. **AI:** Understand `create_trip_plan()` - prompt engineering
+
+### **Interview Preparation**
+
+Check `docs/interview_questions.md` for:
+- 45 Conceptual questions
+- 55 Technical questions
+- Complete answers for each
+
+---
+
+## 🎓 Educational Value
+
+### **Concepts Demonstrated**
+
+- ✅ **Multi-agent systems** - Coordinating specialized functions
+- ✅ **API integration** - Working with multiple external services
+- ✅ **Error handling** - Graceful failures with try-except
+- ✅ **Data flow** - Passing information between functions
+- ✅ **Prompt engineering** - Crafting effective AI instructions
+- ✅ **Real-time data** - Working with live information
+- ✅ **Orchestration** - Managing complex workflows
+
+### **Skills Practiced**
+
+- Python fundamentals
+- RESTful API consumption
+- JSON data processing
+- Asynchronous operations
+- User interface design
+- Error handling strategies
+- System architecture
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how:
+
+### **Adding New Features**
+
+**Example: Hotel Recommendations**
+
+1. Create a new function:
+```python
+def find_hotels(lat, lon, serper_key):
+    """Find hotels near location with ratings"""
+    # Your implementation
+    pass
+```
+
+2. Add to orchestrator:
+```python
+# Step 6: Get hotels
+hotels_info = find_hotels(location_info["lat"], location_info["lon"], serper_key)
+results["hotels"] = hotels_info
+```
+
+3. Update UI to display results
+
+### **Ideas for Contributions**
+
+- 🏨 Hotel recommendations
+- 🍽️ Restaurant suggestions
+- 🚇 Public transport information
+- 💰 Budget estimation
+- 🗓️ Best time to visit
+- 📸 Photo galleries
+- 🎫 Ticket booking links
+- 🌐 Multi-language support
+- 📱 Mobile optimization
+- 💾 Save/load trip plans
+
+---
+
+## 🔄 Roadmap
+
+### **Version 2.0 (Planned)**
+- [ ] Multi-city trip support
+- [ ] User accounts and saved trips
+- [ ] Collaborative trip planning
+- [ ] Budget tracking
+- [ ] Weather forecasts for trip dates
+- [ ] Flight and hotel booking integration
+- [ ] Offline mode with cached data
+
+### **Version 2.5 (Future)**
+- [ ] Mobile app (React Native)
+- [ ] Social sharing features
+- [ ] Travel community integration
+- [ ] AI-powered photo recommendations
+- [ ] Real-time price tracking
+- [ ] Trip modification suggestions
+
+---
+
+## 📈 Performance
+
+### **Response Times**
+- Location lookup: ~1-2 seconds
+- Weather fetch: ~1-2 seconds
+- Attractions search: ~3-5 seconds
+- Ratings (8 places): ~10-15 seconds
+- AI itinerary: ~5-10 seconds
+- **Total:** ~25-35 seconds
+
+### **Optimization Opportunities**
+- Parallel API calls (async/await)
+- Caching frequently searched destinations
+- Progressive loading (show results as available)
+- Rate limiting to respect API quotas
+
+---
+
+## 🔒 Security & Privacy
+
+### **Data Handling**
+- ✅ No user data stored on servers
+- ✅ API keys entered locally (not logged)
+- ✅ All requests are HTTPS encrypted
+- ✅ No tracking or analytics
+- ✅ Open-source and transparent
+
+### **Best Practices**
+- Never commit API keys to version control
+- Use `.env` files for local development
+- Implement rate limiting for production
+- Add authentication for deployed versions
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+### **What This Means**
+- ✅ Free to use for any purpose
+- ✅ Modify and distribute
+- ✅ Commercial use allowed
+- ✅ Private use permitted
+- ⚠️ No warranty provided
+
+---
+
+## 🙏 Acknowledgments
+
+### **APIs & Services**
+- [Open-Meteo](https://open-meteo.com) - Free weather and geocoding
+- [OpenStreetMap](https://www.openstreetmap.org) - Open geographic data
+- [Serper](https://serper.dev) - Google search API
+- [Google Gemini](https://ai.google.dev) - AI model
+- [OpenAI](https://openai.com) - AI model
+- [Streamlit](https://streamlit.io) - Web framework
+
+### **Inspiration**
+Built as a beginner-friendly introduction to multi-agent AI systems and real-world API integration.
+
+---
+
+## 📞 Support & Contact
+
+### **Get Help**
+- 🐛 **Bug Reports:** Open an issue on GitHub
+- 💡 **Feature Requests:** Start a discussion
+- 📧 **Email:** your.email@example.com
+- 💬 **Discord:** [Join our community](#)
+
+### **FAQ**
+
+**Q: Is this really free?**
+A: Yes! All core APIs are free. Serper has a free tier too.
+
+**Q: Can I use this commercially?**
+A: Yes, MIT license allows commercial use.
+
+**Q: How accurate is the data?**
+A: Very! All data comes from reliable, real-time sources.
+
+**Q: Can I add my own APIs?**
+A: Absolutely! Just create a new agent function.
+
+**Q: Does it work offline?**
+A: No, it requires internet for API calls.
+
+---
+
+## ⭐ Show Your Support
+
+If you find this project helpful:
+- ⭐ Star the repository
+- 🍴 Fork and contribute
+- 📢 Share with friends
+- 💬 Provide feedback
+- 🐛 Report bugs
+
+---
+
+## 📊 Stats
+
+![GitHub stars](https://img.shields.io/github/stars/yourusername/universal-ai-travel-planner?style=social)
+![GitHub forks](https://img.shields.io/github/forks/yourusername/universal-ai-travel-planner?style=social)
+![GitHub issues](https://img.shields.io/github/issues/yourusername/universal-ai-travel-planner)
+![GitHub last commit](https://img.shields.io/github/last-commit/yourusername/universal-ai-travel-planner)
+
+---
+
+## 🎯 Key Takeaway
+
+This project demonstrates that **powerful AI applications don't need to be complex**. With:
+- Simple, focused functions
+- Smart coordination
+- Real-time data
+- AI integration
+
+You can build production-ready applications that solve real problems!
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the developer community**
+
+[⬆ Back to Top](#-universal-ai-travel-planner)
+
+</div>
