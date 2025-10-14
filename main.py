@@ -1,6 +1,6 @@
 """
-Smart Travel Planner - Beautiful UI with ChromaDB RAG
-Compact code + Modern design + Full functionality
+Smart Travel Planner - Clean & Readable UI
+ChromaDB RAG + Ticket Parser + Budget Planning
 """
 import streamlit as st
 import requests
@@ -15,106 +15,13 @@ import os
 
 # Page config
 st.set_page_config(
-    page_title="AI Travel Planner",
+    page_title="Universal AI Travel Planner",
     page_icon="✈️",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# Custom CSS for beautiful UI
-st.markdown("""
-    <style>
-    .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    }
-    div.block-container {
-        padding-top: 2rem;
-    }
-    .big-font {
-        font-size: 50px !important;
-        font-weight: bold;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-    }
-    .subtitle {
-        text-align: center;
-        color: #666;
-        font-size: 18px;
-        margin-bottom: 2rem;
-    }
-    .card {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin: 10px 0;
-    }
-    .success-box {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-        margin: 20px 0;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        margin: 5px;
-    }
-    .attraction-card {
-        background: white;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-        margin: 10px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .stButton>button {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-weight: bold;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 25px;
-        font-size: 18px;
-        width: 100%;
-        transition: transform 0.2s;
-    }
-    .stButton>button:hover {
-        transform: scale(1.05);
-    }
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-    }
-    h1, h2, h3 {
-        color: #333;
-    }
-    .step-indicator {
-        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 20px;
-        display: inline-block;
-        margin: 5px;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Header
-st.markdown('<p class="big-font">✈️ AI Travel Planner</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">🤖 Powered by ChromaDB RAG • Smart Ticket Parser • Budget Planning</p>', unsafe_allow_html=True)
+st.title("✈️ Universal AI Travel Planner")
+st.caption("Smart ticket parser • Budget planning • ChromaDB vector database")
 
 # ==================== CHROMADB SETUP ====================
 
@@ -276,33 +183,27 @@ def setup_ai(provider, key, model):
 # ==================== SIDEBAR ====================
 
 with st.sidebar:
-    st.markdown("## ⚙️ Configuration")
-    st.markdown("---")
+    st.header("⚙️ Configuration")
     
-    provider = st.selectbox("🤖 AI Provider", ["Google Gemini", "OpenAI"])
+    provider = st.selectbox("AI Provider", ["Google Gemini", "OpenAI"])
     
     if provider == "Google Gemini":
-        ai_key = st.text_input("🔑 Gemini API Key", type="password", 
-                              help="Get free key at ai.google.dev")
-        model = st.selectbox("📦 Model", ["gemini-2.0-flash-exp", "gemini-1.5-pro"])
+        ai_key = st.text_input("Gemini API Key", type="password")
+        model = st.selectbox("Model", ["gemini-2.5-flash", "gemini-2.5-pro"])
     else:
-        ai_key = st.text_input("🔑 OpenAI API Key", type="password")
-        model = st.selectbox("📦 Model", ["gpt-4o-mini", "gpt-3.5-turbo"])
+        ai_key = st.text_input("OpenAI API Key", type="password")
+        model = st.selectbox("Model", ["gpt-4o-mini", "gpt-3.5-turbo"])
     
-    serper_key = st.text_input("🔍 Serper API Key", type="password", 
-                              help="Optional - for enhanced search")
+    serper_key = st.text_input("Serper API Key (optional)", type="password")
     
-    st.markdown("---")
-    st.markdown("## 🗄️ Vector Database")
+    st.divider()
+    st.subheader("🗄️ Vector Database")
     
     try:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("📍 Attractions", db["attractions"].count())
-        with col2:
-            st.metric("🎫 Tickets", db["tickets"].count())
+        st.metric("Attractions Stored", db["attractions"].count())
+        st.metric("Tickets Stored", db["tickets"].count())
         
-        if st.button("🗑️ Clear Database", help="Delete all stored data"):
+        if st.button("Clear Database"):
             for col in db.values():
                 try:
                     col.delete()
@@ -311,266 +212,219 @@ with st.sidebar:
             st.success("Database cleared!")
             st.rerun()
     except:
-        st.info("Database empty")
-    
-    st.markdown("---")
-    st.markdown("### 🚀 Quick Links")
-    st.markdown("- [Get Gemini API](https://ai.google.dev)")
-    st.markdown("- [Get Serper API](https://serper.dev)")
-    st.markdown("- [Documentation](https://docs.streamlit.io)")
+        st.info("Database is empty")
 
 # ==================== MAIN CONTENT ====================
 
-# Progress indicator
-st.markdown("""
-    <div style='text-align: center; margin: 20px 0;'>
-        <span class='step-indicator'>1️⃣ Upload Tickets</span>
-        <span class='step-indicator'>2️⃣ Enter Details</span>
-        <span class='step-indicator'>3️⃣ Get Itinerary</span>
-    </div>
-""", unsafe_allow_html=True)
+st.header("🎫 Step 1: Upload Tickets (Optional)")
+st.write("Upload your tickets for automatic destination and date extraction")
 
-# Ticket Upload Section
-with st.container():
-    st.markdown("### 🎫 Smart Ticket Parser")
-    st.markdown("*Upload your tickets for automatic destination and date extraction*")
-    
-    col1, col2 = st.columns(2)
-    
-    tickets = {"outbound": None, "return": None}
-    
-    with col1:
-        st.markdown("**🛫 Outbound Ticket**")
-        out_file = st.file_uploader("", type=['pdf', 'png', 'jpg'], key="out", label_visibility="collapsed")
-        if out_file:
-            with st.spinner("🔍 Analyzing ticket..."):
-                tickets["outbound"] = parse_ticket(out_file)
-                store_in_db("tickets", str(tickets["outbound"]), tickets["outbound"])
-            
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.success("✅ Ticket parsed successfully!")
-            st.json(tickets["outbound"])
-            st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("**🛬 Return Ticket**")
-        ret_file = st.file_uploader("", type=['pdf', 'png', 'jpg'], key="ret", label_visibility="collapsed")
-        if ret_file:
-            with st.spinner("🔍 Analyzing ticket..."):
-                tickets["return"] = parse_ticket(ret_file)
-                store_in_db("tickets", str(tickets["return"]), tickets["return"])
-            
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.success("✅ Ticket parsed successfully!")
-            st.json(tickets["return"])
-            st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Auto-calculate days
-    auto_days = None
-    if tickets["outbound"] and tickets["return"]:
-        if tickets["outbound"]["date"] and tickets["return"]["date"]:
-            auto_days = calc_days(tickets["outbound"]["date"], tickets["return"]["date"])
-            if auto_days:
-                st.markdown(f"""
-                    <div class='success-box'>
-                        🗓️ Trip Duration Auto-Calculated: {auto_days} days
-                    </div>
-                """, unsafe_allow_html=True)
+col1, col2 = st.columns(2)
 
-st.markdown("---")
+tickets = {"outbound": None, "return": None}
 
-# Trip Planning Section
-with st.container():
-    st.markdown("### ✈️ Plan Your Perfect Trip")
-    
-    default_dest = tickets["outbound"]["destination"] if tickets["outbound"] and tickets["outbound"]["destination"] else ""
-    destination = st.text_input("🌍 Where do you want to go?", 
-                               value=default_dest, 
-                               placeholder="e.g., Paris, Tokyo, New York",
-                               help="Enter your dream destination")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        days = st.number_input("📅 Trip Duration (days)", 1, 30, auto_days or 7)
-    
-    with col2:
-        budget = st.number_input("💰 Budget (USD)", 0, step=100, value=1000)
-    
-    with col3:
-        budget_type = st.selectbox("💳 Budget Type", ["Total Budget", "Daily Budget"])
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Generate Plan Button
-    if st.button("🚀 Generate My Travel Plan", type="primary"):
-        if not destination or not ai_key:
-            st.error("⚠️ Please enter a destination and add your API key in the sidebar!")
-        else:
-            ai_model = setup_ai(provider, ai_key, model)
+with col1:
+    st.subheader("Outbound Ticket")
+    out_file = st.file_uploader("Upload outbound ticket", type=['pdf', 'png', 'jpg'], key="out")
+    if out_file:
+        with st.spinner("Parsing ticket..."):
+            tickets["outbound"] = parse_ticket(out_file)
+            store_in_db("tickets", str(tickets["outbound"]), tickets["outbound"])
+        st.success("✅ Ticket parsed!")
+        st.json(tickets["outbound"])
+
+with col2:
+    st.subheader("Return Ticket")
+    ret_file = st.file_uploader("Upload return ticket", type=['pdf', 'png', 'jpg'], key="ret")
+    if ret_file:
+        with st.spinner("Parsing ticket..."):
+            tickets["return"] = parse_ticket(ret_file)
+            store_in_db("tickets", str(tickets["return"]), tickets["return"])
+        st.success("✅ Ticket parsed!")
+        st.json(tickets["return"])
+
+# Auto-calculate days
+auto_days = None
+if tickets["outbound"] and tickets["return"]:
+    if tickets["outbound"]["date"] and tickets["return"]["date"]:
+        auto_days = calc_days(tickets["outbound"]["date"], tickets["return"]["date"])
+        if auto_days:
+            st.info(f"🗓️ Auto-calculated trip duration: **{auto_days} days**")
+
+st.divider()
+
+# Trip Planning
+st.header("✈️ Step 2: Enter Trip Details")
+
+default_dest = tickets["outbound"]["destination"] if tickets["outbound"] and tickets["outbound"]["destination"] else ""
+destination = st.text_input("Destination", value=default_dest, placeholder="e.g., Paris, Tokyo, New York")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    days = st.number_input("Trip Days", 1, 30, auto_days or 7)
+
+with col2:
+    budget = st.number_input("Budget ($)", 0, step=100, value=1000)
+
+with col3:
+    budget_type = st.selectbox("Budget Type", ["Total Budget", "Daily Budget"])
+
+st.divider()
+
+# Generate Plan
+st.header("🚀 Step 3: Generate Itinerary")
+
+if st.button("Generate Travel Plan", type="primary", use_container_width=True):
+    if not destination or not ai_key:
+        st.error("⚠️ Please enter a destination and add your API key in the sidebar!")
+    else:
+        ai_model = setup_ai(provider, ai_key, model)
+        
+        progress_bar = st.progress(0)
+        status = st.empty()
+        
+        with st.spinner("Creating your itinerary..."):
+            # Get location
+            status.text("📍 Finding location...")
+            progress_bar.progress(20)
+            loc = get_location(destination)
+            if not loc:
+                st.error("❌ Location not found!")
+                st.stop()
             
-            # Progress bar
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+            # Get weather
+            status.text("⛅ Fetching weather...")
+            progress_bar.progress(40)
+            weather = get_weather(loc["lat"], loc["lon"])
             
-            with st.spinner("🎨 Creating your personalized itinerary..."):
-                # Step 1: Get location
-                status_text.text("📍 Finding location...")
-                progress_bar.progress(20)
-                loc = get_location(destination)
-                if not loc:
-                    st.error("❌ Location not found! Please try a different destination.")
-                    st.stop()
-                
-                # Step 2: Get weather
-                status_text.text("⛅ Fetching weather data...")
-                progress_bar.progress(40)
-                weather = get_weather(loc["lat"], loc["lon"])
-                
-                # Step 3: Get attractions
-                status_text.text("🏛️ Discovering attractions...")
-                progress_bar.progress(60)
-                attractions = get_attractions(loc["lat"], loc["lon"], loc["name"], serper_key)
-                
-                # Step 4: Generate plan
-                status_text.text("🤖 Generating personalized itinerary...")
-                progress_bar.progress(80)
-                dest_info = {**loc, **weather, "attractions": attractions}
-                plan = generate_plan(dest_info, days, budget, budget_type, ai_model)
-                
-                progress_bar.progress(100)
-                status_text.text("✅ Complete!")
+            # Get attractions
+            status.text("🏛️ Finding attractions...")
+            progress_bar.progress(60)
+            attractions = get_attractions(loc["lat"], loc["lon"], loc["name"], serper_key)
             
-            st.markdown("<br>", unsafe_allow_html=True)
+            # Generate plan
+            status.text("🤖 Generating itinerary...")
+            progress_bar.progress(80)
+            dest_info = {**loc, **weather, "attractions": attractions}
+            plan = generate_plan(dest_info, days, budget, budget_type, ai_model)
             
-            # Success Message
-            st.markdown(f"""
-                <div class='success-box'>
-                    🎉 Your personalized {days}-day trip to {loc['name']} is ready!
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Location Info
-            st.markdown("### 📍 Destination Overview")
+            progress_bar.progress(100)
+            status.text("✅ Complete!")
+        
+        st.success(f"🎉 Your {days}-day trip to {loc['name']} is ready!")
+        
+        # Location Info
+        st.subheader("📍 Destination Overview")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Location", loc['name'])
+        with col2:
+            st.metric("Country", loc['country'])
+        with col3:
+            st.metric("Temperature", f"{weather['temp']}°C")
+        with col4:
+            st.metric("Wind Speed", f"{weather['wind']} km/h")
+        
+        # Attractions
+        if attractions:
+            st.subheader("🏛️ Top Attractions")
+            for i, a in enumerate(attractions[:8], 1):
+                st.write(f"**{i}. {a['name']}** - {a['type'].title()}")
+        
+        # Budget Breakdown
+        if budget:
+            st.subheader("💰 Budget Breakdown")
             col1, col2, col3, col4 = st.columns(4)
             
-            with col1:
-                st.markdown(f"""
-                    <div class='metric-card'>
-                        <h3>🌍</h3>
-                        <h4>{loc['name']}</h4>
-                        <p>{loc['country']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            with col2:
-                st.markdown(f"""
-                    <div class='metric-card'>
-                        <h3>🌡️</h3>
-                        <h4>{weather['temp']}°C</h4>
-                        <p>Temperature</p>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            with col3:
-                st.markdown(f"""
-                    <div class='metric-card'>
-                        <h3>💨</h3>
-                        <h4>{weather['wind']} km/h</h4>
-                        <p>Wind Speed</p>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            with col4:
-                st.markdown(f"""
-                    <div class='metric-card'>
-                        <h3>🏛️</h3>
-                        <h4>{len(attractions)}</h4>
-                        <p>Attractions</p>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Attractions
-            if attractions:
-                st.markdown("### 🏛️ Top Attractions")
-                cols = st.columns(2)
-                for i, a in enumerate(attractions[:6]):
-                    with cols[i % 2]:
-                        st.markdown(f"""
-                            <div class='attraction-card'>
-                                <h4>📌 {a['name']}</h4>
-                                <p style='color: #666;'>Type: {a['type'].title()}</p>
-                            </div>
-                        """, unsafe_allow_html=True)
-            
-            # Budget Breakdown
-            if budget:
-                st.markdown("### 💰 Budget Breakdown")
-                col1, col2, col3, col4 = st.columns(4)
-                
-                if budget_type == "Total Budget":
-                    daily = budget / days
-                    col1.metric("💵 Total Budget", f"${budget:,.0f}")
-                    col2.metric("📅 Daily Budget", f"${daily:,.0f}")
-                    col3.metric("🍽️ Per Meal", f"${daily/3:,.0f}")
-                    col4.metric("🛏️ Accommodation", f"${daily*0.4:,.0f}")
-                else:
-                    total = budget * days
-                    col1.metric("📅 Daily Budget", f"${budget:,.0f}")
-                    col2.metric("💵 Total Budget", f"${total:,.0f}")
-                    col3.metric("🍽️ Per Meal", f"${budget/3:,.0f}")
-                    col4.metric("🛏️ Accommodation", f"${budget*0.4:,.0f}")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Itinerary
-            st.markdown("### 📅 Your Personalized Itinerary")
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            st.markdown(plan)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Download Button
-            st.download_button(
-                "📥 Download Complete Itinerary",
-                plan,
-                file_name=f"trip_{destination}_{datetime.now():%Y%m%d}.txt",
-                mime="text/plain"
-            )
+            if budget_type == "Total Budget":
+                daily = budget / days
+                with col1:
+                    st.metric("Total Budget", f"${budget:,.0f}")
+                with col2:
+                    st.metric("Daily Budget", f"${daily:,.0f}")
+                with col3:
+                    st.metric("Per Meal (est)", f"${daily/3:,.0f}")
+                with col4:
+                    st.metric("Accommodation (est)", f"${daily*0.4:,.0f}")
+            else:
+                total = budget * days
+                with col1:
+                    st.metric("Daily Budget", f"${budget:,.0f}")
+                with col2:
+                    st.metric("Total Budget", f"${total:,.0f}")
+                with col3:
+                    st.metric("Per Meal (est)", f"${budget/3:,.0f}")
+                with col4:
+                    st.metric("Accommodation (est)", f"${budget*0.4:,.0f}")
+        
+        # Itinerary
+        st.subheader("📅 Your Personalized Itinerary")
+        st.write(plan)
+        
+        # Download
+        st.download_button(
+            "📥 Download Itinerary",
+            plan,
+            file_name=f"trip_{destination}_{datetime.now():%Y%m%d}.txt",
+            use_container_width=True
+        )
 
-st.markdown("---")
+st.divider()
 
 # RAG Query Tool
-with st.expander("🔍 Search Vector Database", expanded=False):
-    st.markdown("*Query stored travel information using semantic search*")
+with st.expander("🔍 Search Vector Database"):
+    st.write("Query stored travel information using semantic search")
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        query = st.text_input("", placeholder="e.g., best attractions in Paris", label_visibility="collapsed")
+        query = st.text_input("Search query", placeholder="e.g., best attractions in Paris")
     with col2:
-        collection = st.selectbox("", ["attractions", "tickets", "reviews"], label_visibility="collapsed")
+        collection = st.selectbox("Collection", ["attractions", "tickets", "reviews"])
     
-    if st.button("🔍 Search Database"):
+    if st.button("Search"):
         if query:
-            with st.spinner("Searching..."):
-                results = search_db(collection, query)
-                if results:
-                    st.success(f"Found {len(results)} results!")
-                    for i, r in enumerate(results, 1):
-                        st.markdown(f"**Result {i}:**")
-                        st.info(r["text"])
-                else:
-                    st.warning("No results found")
-        else:
-            st.warning("Please enter a search query")
+            results = search_db(collection, query)
+            if results:
+                st.success(f"Found {len(results)} results")
+                for i, r in enumerate(results, 1):
+                    st.write(f"**Result {i}:**")
+                    st.info(r["text"])
+            else:
+                st.warning("No results found")
 
 # Footer
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown("""
-    <div style='text-align: center; color: #666; padding: 20px;'>
-        <p><strong>🤖 Powered by ChromaDB RAG</strong></p>
-        <p>🗄️ Persistent Vector Storage • 🎫 Smart Ticket Parser • 💰 Budget Planning</p>
-        <p style='font-size: 12px;'>Made with ❤️ using Streamlit</p>
-    </div>
-""", unsafe_allow_html=True)
+st.divider()
+st.caption("🤖 Powered by ChromaDB RAG • 🎫 Smart Ticket Parser • 💰 Budget Planning")
+
+# Help
+with st.expander("❓ Help & Documentation"):
+    st.markdown("""
+    ### Installation:
+    ```bash
+    pip install -r requirements.txt
+    ```
+    
+    ### For OCR (Image Tickets):
+    - **Mac:** `brew install tesseract`
+    - **Linux:** `sudo apt-get install tesseract-ocr`
+    - **Windows:** Download from GitHub
+    
+    ### Usage:
+    1. **Upload tickets** (optional) → Auto-fills destination & days
+    2. **Enter trip details** manually if no tickets
+    3. **Add API key** in sidebar (Gemini is free at ai.google.dev)
+    4. **Click Generate** to create your itinerary
+    
+    ### ChromaDB Features:
+    - Stores all attractions, tickets, and reviews
+    - Enables semantic search across collections
+    - RAG enhances AI responses with stored knowledge
+    - Data persists in `./chroma_db/` folder
+    
+    ### Deployment:
+    - Works on Streamlit Cloud
+    - Add `requirements.txt` to your repo
+    - Optionally add `packages.txt` with tesseract-ocr for OCR support
+    """)
