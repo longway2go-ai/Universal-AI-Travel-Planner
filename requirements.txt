@@ -1,42 +1,24 @@
-# Core web framework
-streamlit>=1.48.0
+# Core Framework
+streamlit==1.31.0
 
-# Data manipulation and analysis
-pandas>=2.0.0
-numpy>=1.24.0
+# HTTP Requests
+requests==2.31.0
 
-# Visualization
-plotly>=5.15.0
+# AI Models
+google-generativeai==0.3.2
+openai==1.12.0
 
-# AI/ML libraries
-openai>=1.0.0
-google-generativeai>=0.8.0
-smolagents>=1.21.1
+# Vector Database
+chromadb==0.4.22
 
-# HTTP requests and API calls (REQUIRED for geocoding & nearby discovery)
-requests>=2.31.0
-httpx>=0.28.0
+# PDF Processing
+PyPDF2==3.0.1
 
-# Search APIs
-google-search-results>=2.4.2  # SerpAPI
+# Image Processing
+Pillow==10.2.0
+pytesseract==0.3.10
 
-# Date and time handling
-python-dateutil>=2.8.2
-
-# Environment variables
-python-dotenv>=1.0.0
-
-# Math and scientific computing
-scipy>=1.10.0
-
-# For Hugging Face models and inference
-huggingface-hub>=0.20.0
-
-# Optional: Enhanced error handling
-loguru>=0.7.0
-
-# Optional: Data validation
-pydantic>=2.0.0
-
-# System utilities
-psutil>=5.9.0
+# Additional Dependencies (auto-installed with above packages)
+# pydantic
+# numpy
+# typing-extensions
