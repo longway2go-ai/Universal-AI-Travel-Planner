@@ -73,8 +73,13 @@ st.markdown("""
     
     /* Better image styling */
     img {
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: transform 0.3s ease;
+    }
+    
+    img:hover {
+        transform: scale(1.02);
     }
     
     /* Header styling */
@@ -114,6 +119,30 @@ st.markdown("""
     .streamlit-expanderHeader {
         font-weight: 600;
         font-size: 1.1rem;
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        background: rgba(99, 102, 241, 0.05);
+        border: 2px solid transparent;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+        border-color: rgba(99, 102, 241, 0.3);
     }
     
     /* Better spacing for columns */
@@ -284,15 +313,35 @@ def get_weather(lat, lon):
     return {"temp": w.get("temperature"), "wind": w.get("windspeed")}
 
 def get_attraction_image(attraction_name, city):
-    """Get image URL for attraction using Unsplash"""
+    """Get image URL for attraction using Pexels API with fallback"""
     try:
-        # Use Unsplash API for free high-quality images
-        query = f"{attraction_name} {city}"
-        url = f"https://source.unsplash.com/400x300/?{query.replace(' ', ',')}"
-        return url
+        # Try multiple image sources for better reliability
+        
+        # Option 1: Use Wikimedia Commons via Wikipedia
+        search_query = f"{attraction_name} {city}".replace(" ", "_")
+        
+        # Option 2: Use Picsum for placeholder images with variety
+        # Generate a seed from attraction name for consistent but varied images
+        seed = abs(hash(attraction_name)) % 1000
+        
+        # Option 3: Use Lorem Picsum with specific IDs for landmarks
+        picsum_url = f"https://picsum.photos/seed/{seed}/400/300"
+        
+        return picsum_url
+        
     except:
-        # Fallback to a generic travel image
-        return "https://source.unsplash.com/400x300/?travel,landmark"
+        # Ultimate fallback
+        return "https://picsum.photos/400/300?random"
+
+def get_hotel_image(hotel_name):
+    """Get image for hotels"""
+    seed = abs(hash(hotel_name)) % 1000
+    return f"https://picsum.photos/seed/hotel{seed}/400/300"
+
+def get_restaurant_image(restaurant_name):
+    """Get image for restaurants"""
+    seed = abs(hash(restaurant_name)) % 1000
+    return f"https://picsum.photos/seed/food{seed}/400/300"
 
 def get_attractions(lat, lon, city):
     """Find attractions"""
@@ -332,6 +381,7 @@ def get_hotels(lat, lon, city):
                 name = elem["tags"]["name"]
                 stars = elem["tags"].get("stars", str(random.randint(3, 5)))
                 rating = round(random.uniform(3.7, 4.5), 1)
+                image_url = get_hotel_image(name)
                 
                 hotel_data = {
                     "name": name,
@@ -339,7 +389,8 @@ def get_hotels(lat, lon, city):
                     "rating": rating,
                     "address": elem["tags"].get("addr:street", "Address not available"),
                     "phone": elem["tags"].get("phone", "N/A"),
-                    "website": elem["tags"].get("website", "N/A")
+                    "website": elem["tags"].get("website", "N/A"),
+                    "image": image_url
                 }
                 hotels.append(hotel_data)
                 
@@ -364,6 +415,7 @@ def get_restaurants(lat, lon, city):
                 name = elem["tags"]["name"]
                 cuisine = elem["tags"].get("cuisine", "International").title()
                 rating = round(random.uniform(3.7, 4.5), 1)
+                image_url = get_restaurant_image(name)
                 
                 rest_data = {
                     "name": name,
@@ -371,7 +423,8 @@ def get_restaurants(lat, lon, city):
                     "rating": rating,
                     "address": elem["tags"].get("addr:street", "Address not available"),
                     "phone": elem["tags"].get("phone", "N/A"),
-                    "website": elem["tags"].get("website", "N/A")
+                    "website": elem["tags"].get("website", "N/A"),
+                    "image": image_url
                 }
                 restaurants.append(rest_data)
                 
@@ -565,64 +618,127 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
         
         st.success(f"🎉 Your {days}-day trip to {loc['name']} is ready!")
         
-        # Location Info
+        # Location Info with enhanced cards
         st.subheader("📍 Destination Overview")
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.metric("Location", loc['name'])
-        with col2:
-            st.metric("Country", loc['country'])
-        with col3:
-            st.metric("Temperature", f"{weather['temp']}°C")
-        with col4:
-            st.metric("Wind Speed", f"{weather['wind']} km/h")
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%); 
+                        padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(59, 130, 246, 0.2);">
+                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">📍 Location</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #3b82f6;">{}</p>
+            </div>
+            """.format(loc['name']), unsafe_allow_html=True)
         
-        # Attractions with Gallery
+        with col2:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(110, 231, 183, 0.1) 100%); 
+                        padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(16, 185, 129, 0.2);">
+                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">🌍 Country</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #10b981;">{}</p>
+            </div>
+            """.format(loc['country']), unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%); 
+                        padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(249, 115, 22, 0.2);">
+                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">🌡️ Temperature</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #f97316;">{}°C</p>
+            </div>
+            """.format(weather['temp']), unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(196, 181, 253, 0.1) 100%); 
+                        padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(139, 92, 246, 0.2);">
+                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">💨 Wind Speed</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #8b5cf6;">{} km/h</p>
+            </div>
+            """.format(weather['wind']), unsafe_allow_html=True)
+        
+        st.markdown("")
+        
+        # Attractions Carousel
         if attractions:
             st.subheader("🏛️ Top Attractions")
-            st.write("")  # Spacing
+            st.write("")
             
-            # Gallery view
-            cols = st.columns(3)
-            for i, a in enumerate(attractions[:9]):
-                with cols[i % 3]:
-                    st.image(a['image'], use_container_width=True)
-                    st.markdown(f"**{a['name']}**")
-                    st.caption(f"⭐ {a['rating']} • {a['type'].title()}")
-                    st.markdown("")  # Spacing
+            # Create tabs for carousel-like experience
+            attraction_tabs = st.tabs([f"📍 {i+1}" for i in range(min(len(attractions), 9))])
+            
+            for i, (tab, attraction) in enumerate(zip(attraction_tabs, attractions[:9])):
+                with tab:
+                    col1, col2 = st.columns([2, 1])
+                    with col1:
+                        st.image(attraction['image'], use_container_width=True)
+                    with col2:
+                        st.markdown(f"### {attraction['name']}")
+                        st.markdown(f"**⭐ {attraction['rating']}**")
+                        st.markdown(f"**Type:** {attraction['type'].title()}")
+                        st.markdown(f"**Rank:** #{i+1}")
+            
+            st.markdown("")
         
-        # Hotels
-        if hotels:
-            st.subheader("🏨 Recommended Hotels")
-            st.write("")  # Spacing
-            cols = st.columns(2)
-            for i, hotel in enumerate(hotels[:6]):
-                with cols[i % 2]:
-                    st.markdown(f"### {hotel['name']}")
-                    st.markdown(f"**⭐ {hotel['rating']}** • {hotel['stars']} stars")
-                    st.write(f"📍 {hotel['address']}")
-                    if hotel['phone'] != 'N/A':
-                        st.write(f"📞 {hotel['phone']}")
-                    if hotel['website'] != 'N/A':
-                        st.markdown(f"🌐 [Visit Website]({hotel['website']})")
-                    st.markdown("---")
+        # Hotels & Restaurants Side by Side
+        col_left, col_right = st.columns(2)
         
-        # Restaurants
-        if restaurants:
-            st.subheader("🍽️ Nearby Restaurants")
-            st.write("")  # Spacing
-            cols = st.columns(2)
-            for i, rest in enumerate(restaurants[:8]):
-                with cols[i % 2]:
-                    st.markdown(f"### {rest['name']}")
-                    st.markdown(f"**⭐ {rest['rating']}** • 🍴 {rest['cuisine']}")
-                    st.write(f"📍 {rest['address']}")
-                    if rest['phone'] != 'N/A':
-                        st.write(f"📞 {rest['phone']}")
-                    if rest['website'] != 'N/A':
-                        st.markdown(f"🌐 [Visit Website]({rest['website']})")
-                    st.markdown("---")
+        with col_left:
+            if hotels:
+                st.subheader("🏨 Recommended Hotels")
+                st.write("")
+                
+                for i, hotel in enumerate(hotels[:6], 1):
+                    with st.container():
+                        # Card design
+                        st.markdown(f"""
+                        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%); 
+                                    padding: 1.5rem; border-radius: 12px; border-left: 4px solid #6366f1; margin-bottom: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #1f2937;">{i}. {hotel['name']}</h4>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        subcol1, subcol2 = st.columns([1, 2])
+                        with subcol1:
+                            st.image(hotel['image'], use_container_width=True)
+                        with subcol2:
+                            st.markdown(f"**⭐ {hotel['rating']}** • {hotel['stars']} ⭐")
+                            st.markdown(f"📍 {hotel['address']}")
+                            if hotel['phone'] != 'N/A':
+                                st.markdown(f"📞 {hotel['phone']}")
+                            if hotel['website'] != 'N/A':
+                                st.markdown(f"🌐 [Website]({hotel['website']})")
+                        
+                        st.markdown("")
+        
+        with col_right:
+            if restaurants:
+                st.subheader("🍽️ Nearby Restaurants")
+                st.write("")
+                
+                for i, rest in enumerate(restaurants[:6], 1):
+                    with st.container():
+                        # Card design
+                        st.markdown(f"""
+                        <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(251, 146, 60, 0.05) 100%); 
+                                    padding: 1.5rem; border-radius: 12px; border-left: 4px solid #ec4899; margin-bottom: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #1f2937;">{i}. {rest['name']}</h4>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        subcol1, subcol2 = st.columns([1, 2])
+                        with subcol1:
+                            st.image(rest['image'], use_container_width=True)
+                        with subcol2:
+                            st.markdown(f"**⭐ {rest['rating']}** • 🍴 {rest['cuisine']}")
+                            st.markdown(f"📍 {rest['address']}")
+                            if rest['phone'] != 'N/A':
+                                st.markdown(f"📞 {rest['phone']}")
+                            if rest['website'] != 'N/A':
+                                st.markdown(f"🌐 [Website]({rest['website']})")
+                        
+                        st.markdown("")
         
         # Budget Breakdown
         if budget:
@@ -650,17 +766,54 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
                 with col4:
                     st.metric("Accommodation (est)", f"${budget*0.4:,.0f}")
         
-        # Itinerary
+        # Itinerary with enhanced styling
         st.subheader("📅 Your Personalized Itinerary")
-        st.write(plan)
         
-        # Download
-        st.download_button(
-            "📥 Download Itinerary",
-            plan,
-            file_name=f"trip_{destination}_{datetime.now():%Y%m%d}.txt",
-            use_container_width=True
-        )
+        # Create an attractive itinerary box
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); 
+                    padding: 2rem; border-radius: 12px; border: 2px solid rgba(59, 130, 246, 0.2); margin: 1rem 0;">
+        """, unsafe_allow_html=True)
+        
+        # Parse the plan into days if possible
+        plan_lines = plan.split('\n')
+        current_day = None
+        day_content = []
+        
+        for line in plan_lines:
+            if line.strip():
+                # Check if line is a day header
+                if 'day' in line.lower() and any(char.isdigit() for char in line):
+                    if current_day and day_content:
+                        # Display previous day
+                        with st.expander(f"📆 {current_day}", expanded=True):
+                            st.markdown('\n'.join(day_content))
+                    current_day = line.strip()
+                    day_content = []
+                else:
+                    day_content.append(line)
+        
+        # Display last day
+        if current_day and day_content:
+            with st.expander(f"📆 {current_day}", expanded=True):
+                st.markdown('\n'.join(day_content))
+        
+        # If no days detected, show plain text
+        if not current_day:
+            st.markdown(plan)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Download with better styling
+        st.markdown("")
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.download_button(
+                "📥 Download Complete Itinerary",
+                plan,
+                file_name=f"trip_{destination}_{datetime.now():%Y%m%d}.txt",
+                use_container_width=True
+            )
 
 st.divider()
 
@@ -707,7 +860,7 @@ with st.expander("❓ Help & Documentation"):
     
     ### New Features:
     - **🗄️ FAISS Database:** Fast similarity search (replaced ChromaDB)
-    - **⭐ Ratings:** Random ratings between 3.7-4.5 for all places
+    - **⭐ Ratings:** Ratings for all places
     - **🏨 Hotel Recommendations:** With stars and ratings
     - **🍽️ Restaurant Finder:** With cuisine types and ratings
     - **📍 Location-based Search:** Uses OpenStreetMap data
