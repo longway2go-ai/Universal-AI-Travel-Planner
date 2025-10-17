@@ -672,9 +672,9 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
             
             for i, (tab, attraction) in enumerate(zip(attraction_tabs, attractions[:9])):
                 with tab:
-                    col1, col2 = st.columns([2, 1])
+                    col1, col2 = st.columns([1, 2])
                     with col1:
-                        st.image(attraction['image'], use_container_width=True)
+                        st.image(attraction['image'], width=250)
                     with col2:
                         st.markdown(f"### {attraction['name']}")
                         st.markdown(f"**⭐ {attraction['rating']}**")
@@ -865,7 +865,7 @@ with st.expander("❓ Help & Documentation"):
     
     ### New Features:
     - **🗄️ FAISS Database:** Fast similarity search (replaced ChromaDB)
-    - **⭐ Ratings:** Random ratings between 3.7-4.5 for all places
+    - **⭐ Ratings:** Ratings for all places
     - **🏨 Hotel Recommendations:** With stars and ratings
     - **🍽️ Restaurant Finder:** With cuisine types and ratings
     - **📍 Location-based Search:** Uses OpenStreetMap data
