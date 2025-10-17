@@ -1,24 +1,9 @@
-# Core Framework
-streamlit==1.31.0
-
-# HTTP Requests
-requests==2.31.0
-
-# AI Models
-google-generativeai==0.3.2
-openai==1.12.0
-
-# Vector Database
-chromadb==0.4.22
-
-# PDF Processing
-PyPDF2==3.0.1
-
-# Image Processing
-Pillow>=10.4.0
-pytesseract==0.3.10
-
-# Additional Dependencies (auto-installed with above packages)
-# pydantic
-# numpy
-# typing-extensions
+streamlit>=1.28.0
+requests>=2.31.0
+PyPDF2>=3.0.0
+Pillow>=10.0.0
+pytesseract>=0.3.10
+faiss-cpu>=1.7.4
+numpy>=1.24.0
+google-generativeai>=0.3.0
+openai>=1.3.0
