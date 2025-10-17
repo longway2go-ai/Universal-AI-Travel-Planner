@@ -315,33 +315,27 @@ def get_weather(lat, lon):
 def get_attraction_image(attraction_name, city):
     """Get image URL for attraction using Pexels API with fallback"""
     try:
-        # Try multiple image sources for better reliability
-        
-        # Option 1: Use Wikimedia Commons via Wikipedia
-        search_query = f"{attraction_name} {city}".replace(" ", "_")
-        
-        # Option 2: Use Picsum for placeholder images with variety
         # Generate a seed from attraction name for consistent but varied images
         seed = abs(hash(attraction_name)) % 1000
         
-        # Option 3: Use Lorem Picsum with specific IDs for landmarks
-        picsum_url = f"https://picsum.photos/seed/{seed}/400/300"
+        # Smaller image size: 200x150
+        picsum_url = f"https://picsum.photos/seed/{seed}/200/150"
         
         return picsum_url
         
     except:
         # Ultimate fallback
-        return "https://picsum.photos/400/300?random"
+        return "https://picsum.photos/200/150?random"
 
 def get_hotel_image(hotel_name):
     """Get image for hotels"""
     seed = abs(hash(hotel_name)) % 1000
-    return f"https://picsum.photos/seed/hotel{seed}/400/300"
+    return f"https://picsum.photos/seed/hotel{seed}/200/150"
 
 def get_restaurant_image(restaurant_name):
     """Get image for restaurants"""
     seed = abs(hash(restaurant_name)) % 1000
-    return f"https://picsum.photos/seed/food{seed}/400/300"
+    return f"https://picsum.photos/seed/food{seed}/200/150"
 
 def get_attractions(lat, lon, city):
     """Find attractions"""
@@ -456,7 +450,15 @@ Details:
 - Weather: {dest_info.get('temp', 'N/A')}°C
 - Attractions: {attractions}{budget_info}
 
-Create day-by-day itinerary with activities and budget tips."""
+Create day-by-day itinerary with activities and budget tips.
+
+IMPORTANT FORMATTING RULES:
+1. Use plain text only - NO markdown symbols like *, **, or ***
+2. For currency, write: "USD 650" or "$650" (no asterisks)
+3. For emphasis, use CAPS or write normally
+4. Structure each day clearly with "Day 1:", "Day 2:", etc.
+5. Use simple bullet points with "-" or numbers
+6. Keep all text clean and readable without any special formatting characters"""
     
     response = ai_model(prompt)
     return response.content if hasattr(response, 'content') else str(response)
@@ -626,8 +628,8 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
             st.markdown("""
             <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.1) 100%); 
                         padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(59, 130, 246, 0.2);">
-                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">📍 Location</h3>
-                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #3b82f6;">{}</p>
+                <h3 style="margin: 0; color: #e5e7eb; font-size: 1.1rem;">📍 Location</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #93c5fd;">{}</p>
             </div>
             """.format(loc['name']), unsafe_allow_html=True)
         
@@ -635,8 +637,8 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
             st.markdown("""
             <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(110, 231, 183, 0.1) 100%); 
                         padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(16, 185, 129, 0.2);">
-                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">🌍 Country</h3>
-                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #10b981;">{}</p>
+                <h3 style="margin: 0; color: #e5e7eb; font-size: 1.1rem;">🌍 Country</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #6ee7b7;">{}</p>
             </div>
             """.format(loc['country']), unsafe_allow_html=True)
         
@@ -644,8 +646,8 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
             st.markdown("""
             <div style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%); 
                         padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(249, 115, 22, 0.2);">
-                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">🌡️ Temperature</h3>
-                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #f97316;">{}°C</p>
+                <h3 style="margin: 0; color: #e5e7eb; font-size: 1.1rem;">🌡️ Temperature</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #fbbf24;">{}°C</p>
             </div>
             """.format(weather['temp']), unsafe_allow_html=True)
         
@@ -653,8 +655,8 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
             st.markdown("""
             <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(196, 181, 253, 0.1) 100%); 
                         padding: 1.5rem; border-radius: 12px; text-align: center; border: 2px solid rgba(139, 92, 246, 0.2);">
-                <h3 style="margin: 0; color: #1f2937; font-size: 1.1rem;">💨 Wind Speed</h3>
-                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #8b5cf6;">{} km/h</p>
+                <h3 style="margin: 0; color: #e5e7eb; font-size: 1.1rem;">💨 Wind Speed</h3>
+                <p style="margin: 0.5rem 0 0 0; font-size: 1.3rem; font-weight: 700; color: #c4b5fd;">{} km/h</p>
             </div>
             """.format(weather['wind']), unsafe_allow_html=True)
         
@@ -695,11 +697,11 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%); 
                                     padding: 1.5rem; border-radius: 12px; border-left: 4px solid #6366f1; margin-bottom: 1rem;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #1f2937;">{i}. {hotel['name']}</h4>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #f9fafb;">{i}. {hotel['name']}</h4>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        subcol1, subcol2 = st.columns([1, 2])
+                        subcol1, subcol2 = st.columns([1, 3])
                         with subcol1:
                             st.image(hotel['image'], use_container_width=True)
                         with subcol2:
@@ -723,11 +725,11 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(251, 146, 60, 0.05) 100%); 
                                     padding: 1.5rem; border-radius: 12px; border-left: 4px solid #ec4899; margin-bottom: 1rem;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #1f2937;">{i}. {rest['name']}</h4>
+                            <h4 style="margin: 0 0 0.5rem 0; color: #f9fafb;">{i}. {rest['name']}</h4>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        subcol1, subcol2 = st.columns([1, 2])
+                        subcol1, subcol2 = st.columns([1, 3])
                         with subcol1:
                             st.image(rest['image'], use_container_width=True)
                         with subcol2:
@@ -771,12 +773,15 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
         
         # Create an attractive itinerary box
         st.markdown("""
-        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); 
-                    padding: 2rem; border-radius: 12px; border: 2px solid rgba(59, 130, 246, 0.2); margin: 1rem 0;">
+        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%); 
+                    padding: 2rem; border-radius: 12px; border: 2px solid rgba(59, 130, 246, 0.3); margin: 1rem 0;">
         """, unsafe_allow_html=True)
         
+        # Clean the plan text from markdown artifacts
+        clean_plan = plan.replace('**', '').replace('*', '').replace('~', '')
+        
         # Parse the plan into days if possible
-        plan_lines = plan.split('\n')
+        plan_lines = clean_plan.split('\n')
         current_day = None
         day_content = []
         
@@ -800,7 +805,7 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
         
         # If no days detected, show plain text
         if not current_day:
-            st.markdown(plan)
+            st.markdown(clean_plan)
         
         st.markdown("</div>", unsafe_allow_html=True)
         
@@ -860,7 +865,7 @@ with st.expander("❓ Help & Documentation"):
     
     ### New Features:
     - **🗄️ FAISS Database:** Fast similarity search (replaced ChromaDB)
-    - **⭐ Ratings:** Ratings for all places
+    - **⭐ Ratings:** Random ratings between 3.7-4.5 for all places
     - **🏨 Hotel Recommendations:** With stars and ratings
     - **🍽️ Restaurant Finder:** With cuisine types and ratings
     - **📍 Location-based Search:** Uses OpenStreetMap data
