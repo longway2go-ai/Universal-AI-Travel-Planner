@@ -22,6 +22,131 @@ st.set_page_config(
     layout="wide"
 )
 
+# Custom CSS for better readability
+st.markdown("""
+<style>
+    /* Better text contrast and spacing */
+    .stMarkdown, .stText {
+        line-height: 1.6;
+    }
+    
+    /* Card-like containers */
+    .element-container {
+        padding: 0.5rem 0;
+    }
+    
+    /* Better button styling */
+    .stButton button {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border: 2px solid rgba(49, 51, 63, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .stButton button:hover {
+        border-color: rgba(49, 51, 63, 0.4);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Better metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    
+    /* Improve dividers */
+    hr {
+        margin: 2rem 0;
+        border: none;
+        border-top: 2px solid rgba(49, 51, 63, 0.1);
+    }
+    
+    /* Card styling for containers */
+    .stContainer {
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid rgba(49, 51, 63, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+        margin-bottom: 1rem;
+    }
+    
+    /* Better image styling */
+    img {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Header styling */
+    h1 {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+    
+    h2 {
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid rgba(49, 51, 63, 0.1);
+    }
+    
+    h3 {
+        font-weight: 600;
+        color: rgba(49, 51, 63, 0.9);
+    }
+    
+    /* Better caption styling */
+    .caption, [data-testid="stCaptionContainer"] {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.25rem;
+    }
+    
+    /* Info/Success boxes with better contrast */
+    .stAlert {
+        border-radius: 8px;
+        border-left: 4px solid;
+        padding: 1rem;
+    }
+    
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    /* Better spacing for columns */
+    [data-testid="column"] {
+        padding: 0 0.75rem;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div {
+        border-radius: 10px;
+    }
+    
+    /* File uploader styling */
+    [data-testid="stFileUploader"] {
+        border: 2px dashed rgba(49, 51, 63, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    /* Input fields */
+    .stTextInput input, .stNumberInput input, .stSelectbox select {
+        border-radius: 6px;
+        border: 2px solid rgba(49, 51, 63, 0.2);
+        padding: 0.5rem;
+    }
+    
+    .stTextInput input:focus, .stNumberInput input:focus, .stSelectbox select:focus {
+        border-color: rgba(49, 51, 63, 0.4);
+        box-shadow: 0 0 0 2px rgba(49, 51, 63, 0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("✈️ Universal AI Travel Planner")
 st.caption("Smart ticket parser • Budget planning • Hotels & Restaurants • FAISS vector database")
 
@@ -453,43 +578,51 @@ if st.button("Generate Travel Plan", type="primary", use_container_width=True):
         with col4:
             st.metric("Wind Speed", f"{weather['wind']} km/h")
         
-        # Attractions
+        # Attractions with Gallery
         if attractions:
             st.subheader("🏛️ Top Attractions")
-            for i, a in enumerate(attractions[:8], 1):
-                st.write(f"**{i}. {a['name']}** - {a['type'].title()} ⭐ {a['rating']}")
+            st.write("")  # Spacing
+            
+            # Gallery view
+            cols = st.columns(3)
+            for i, a in enumerate(attractions[:9]):
+                with cols[i % 3]:
+                    st.image(a['image'], use_container_width=True)
+                    st.markdown(f"**{a['name']}**")
+                    st.caption(f"⭐ {a['rating']} • {a['type'].title()}")
+                    st.markdown("")  # Spacing
         
         # Hotels
         if hotels:
             st.subheader("🏨 Recommended Hotels")
+            st.write("")  # Spacing
             cols = st.columns(2)
             for i, hotel in enumerate(hotels[:6]):
                 with cols[i % 2]:
-                    with st.container():
-                        st.markdown(f"**{hotel['name']}**")
-                        st.caption(f"⭐ {hotel['rating']} • {hotel['stars']} stars")
-                        st.caption(f"📍 {hotel['address']}")
-                        if hotel['phone'] != 'N/A':
-                            st.caption(f"📞 {hotel['phone']}")
-                        if hotel['website'] != 'N/A':
-                            st.caption(f"🌐 [Website]({hotel['website']})")
-                        st.divider()
+                    st.markdown(f"### {hotel['name']}")
+                    st.markdown(f"**⭐ {hotel['rating']}** • {hotel['stars']} stars")
+                    st.write(f"📍 {hotel['address']}")
+                    if hotel['phone'] != 'N/A':
+                        st.write(f"📞 {hotel['phone']}")
+                    if hotel['website'] != 'N/A':
+                        st.markdown(f"🌐 [Visit Website]({hotel['website']})")
+                    st.markdown("---")
         
         # Restaurants
         if restaurants:
             st.subheader("🍽️ Nearby Restaurants")
+            st.write("")  # Spacing
             cols = st.columns(2)
             for i, rest in enumerate(restaurants[:8]):
                 with cols[i % 2]:
-                    with st.container():
-                        st.markdown(f"**{rest['name']}**")
-                        st.caption(f"⭐ {rest['rating']} • 🍴 {rest['cuisine']}")
-                        st.caption(f"📍 {rest['address']}")
-                        if rest['phone'] != 'N/A':
-                            st.caption(f"📞 {rest['phone']}")
-                        if rest['website'] != 'N/A':
-                            st.caption(f"🌐 [Website]({rest['website']})")
-                        st.divider()
+                    st.markdown(f"### {rest['name']}")
+                    st.markdown(f"**⭐ {rest['rating']}** • 🍴 {rest['cuisine']}")
+                    st.write(f"📍 {rest['address']}")
+                    if rest['phone'] != 'N/A':
+                        st.write(f"📞 {rest['phone']}")
+                    if rest['website'] != 'N/A':
+                        st.markdown(f"🌐 [Visit Website]({rest['website']})")
+                    st.markdown("---")
         
         # Budget Breakdown
         if budget:
@@ -572,12 +705,18 @@ with st.expander("❓ Help & Documentation"):
     3. **Add API key** in sidebar (Gemini is free at ai.google.dev)
     4. **Click Generate** to create your itinerary
     
-    ### Features:
-    - **🗄️ FAISS Database:** Fast similarity search
+    ### New Features:
+    - **🗄️ FAISS Database:** Fast similarity search (replaced ChromaDB)
+    - **⭐ Ratings:** Random ratings between 3.7-4.5 for all places
     - **🏨 Hotel Recommendations:** With stars and ratings
     - **🍽️ Restaurant Finder:** With cuisine types and ratings
     - **📍 Location-based Search:** Uses OpenStreetMap data
     
+    ### FAISS Features:
+    - Lightweight and fast vector search
+    - Simple hash-based embeddings
+    - Stores all data in `./faiss_db/` folder
+    - Persistent storage across sessions
     
     ### Deployment:
     - Works on Streamlit Cloud
